@@ -33,7 +33,6 @@ directory_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 directory_server.bind((DIR_IP, DIR_PORT))
 directory_server.listen(NB_CONN)
 
-print()
 # Begin listening for onion routers
 while router_count < NUM_ROUTERS:
     client_socket, client_address = directory_server.accept()

@@ -31,7 +31,7 @@ while 1:
 	data = conn.recv(BUFFER_SIZE)
 	hashed = sha224(data).hexdigest()
 	if not data: break
-	print("received data:", data)
+	print("Received data:", data)
 	conn.send(hashed)  # return hash
 
 conn.close()
