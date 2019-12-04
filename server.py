@@ -8,15 +8,20 @@ Should not know it is being accessed through onion routing
 Should send back the hash of the received message
 '''
 import socket
-import hashlib
+from hashlib import sha224
+import configparser
 
-TCP_IP = socket.gethostbyname(socket.gethostname())
-#TCP_IP = '127.0.0.1'
-TCP_PORT = 1601
-BUFFER_SIZE = 512  # Normally 1024, but we want fast response
+CONFIG_FILE = "sweet_onions.cfg"
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+
+IP = socket.gethostbyname(socket.gethostname())
+PORT = config['SERVER']['Port']
+BUFFER_SIZE = config['SERVER']['BufferSize']
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, TCP_PORT))
+s.bind((IP, PORT))
 s.listen(1) #maximum 1 connection
 
 while 1:
@@ -24,7 +29,7 @@ while 1:
 	addr = addr[0]
 	print('Connection address:', addr)
 	data = conn.recv(BUFFER_SIZE)
-	hashed = hashlib.sha224(data).hexdigest()
+	hashed = sha224(data).hexdigest()
 	if not data: break
 	print("received data:", data)
 	conn.send(hashed)  # return hash
