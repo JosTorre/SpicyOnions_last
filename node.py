@@ -71,7 +71,7 @@ print("Sending request to directory server.")
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send('Onion Router###' + publicRSA)
+s.send('Onion Router###' + pub_key)
 s.close()
 
 # Get Directory Data

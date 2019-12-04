@@ -1,26 +1,28 @@
 # SweetOnions - Making Onion Routing Great Again
 ------
-The purpose of SweetOnions is to emulate a smaller-scale version of onion routing using Python 2.7. There will be a client, server, directory, and three onion routing nodes through which the client can send and recieve encrypted messages. Each message uses asymmetric encryption - the message itself is encrypted with 192-bit AES and the AES key is subsequently encrypted with 2048-RSA to ensure the sender is anonymized. 
+The purpose of SweetOnions is to emulate a smaller-scale version of onion routing using Python 3. 
+There will be a client, server, directory, and three onion routing nodes through which the client can send and receive encrypted messages.
+Each message uses asymmetric encryption - the message itself is encrypted with 192-bit AES and the AES key is subsequently encrypted with 2048-RSA to ensure the sender is anonymized. 
 
 ## Installation
 ------
-Python**3**
+You need Python**3** or higher.
 
 ## Usage
 ------
 This tool requires a minimum of five machines (2 onion routing nodes) and six machines (3 onion routing nodes) to operate in order to simulate a TOR/onion routing network. The machines should be running as follows:
 
-_Machine 1_: python client.py (This will request the user to enter the directory node's IP address as well as the message the user would like to send)
+_Machine 1_: ./client.py (This will request the user to enter the directory node's IP address as well as the message the user would like to send)
 
-_Machine 2_: python directory.py
+_Machine 2_: ./directory.py
 
-_Machine 3_: python node.py -genKey
+_Machine 3_: ./node.py --generate-keys
 
-_Machine 4_: python node.py -genKey
+_Machine 4_: ./node.py --generate-keys
 
-_Machine 5_: python node.py -genKey (Each node will request the directory node's IP address) [Optional Machine]
+_Machine 5_: ./node.py --generate-keys (Each node will request the directory node's IP address) [Optional Machine]
 
-_Machine 6_: python server.py
+_Machine 6_: ./server.py
 
 ## Demo
 ------
@@ -32,9 +34,9 @@ The following is a breakdown of what each aspect of the project accomplishes.
 
 ### 1. client.py
 ------
-This is the front-end tool that allows users to send and recieve messages from the server. Upon recieving the message from the server, the client will compare the hashes of the sent and recieved messages to ensure integrity. 
+This is the front-end tool that allows users to send and receive messages from the server. Upon recieving the message from the server, the client will compare the hashes of the sent and received messages to ensure integrity. 
 
-The client must first contact the directory node in order to recieve a list of potential onion routing nodes and their RSA public keys. The client will randomly select the path through which the message will be sent, and it will encrypt the message in the following manner, where Node 3 is the exit node and Node 1 is the entrance node:
+The client must first contact the directory node in order to receive a list of potential onion routing nodes and their RSA public keys. The client will randomly select the path through which the message will be sent, and it will encrypt the message in the following manner, where Node 3 is the exit node and Node 1 is the entrance node:
 
 a) AES Encrypt via Node 3's AES Key the following: [message + Node3_IP]
 
@@ -68,4 +70,4 @@ _Message Node 2 Sends to Node 3_: AES[message + DesinationIP] + RSA[Node3_AESKey
 
 ### 4. server.py
 ------
-The purpose of server is to simply recieve messages and send the hashed version of the message back to the original exit node. 
+The purpose of server is to simply receive messages and send the hashed version of the message back to the original exit node. 
