@@ -169,7 +169,7 @@ while 1:
             returnMessage = "###" + returnMessage
             if x != 0:
                 returnMessage = returnRoute[x-1] + returnMessage
-            encryptedKey, encryptedMsg = easyEncrypt(NODES[returnRoute[x]], returnMessage)
+            encryptedKey, encryptedMsg = easy_encrypt(NODES[returnRoute[x]], returnMessage)
             returnMessage = encryptedMsg + "###" + encryptedKey
             
         

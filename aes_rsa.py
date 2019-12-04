@@ -2,7 +2,7 @@
 # coding: utf-8
 
 # This file contains functions used for multi-layered encryption
-import os
+from os import urandom
 from base64 import b64decode, b64encode
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
@@ -15,22 +15,34 @@ def pad(msg: str) -> str:
 
 #Generates an AES key
 #Returns base64 encoded AES key
-def genAESKey():
-	secret = os.urandom(BLOCK_SIZE)
-	return b64encode(secret)
+def gen_aes_key():
+    """Create new key usable by AES
+
+    :return: The key encoded in base 64
+    :rtype: str
+    """
+    secret = urandom(BLOCK_SIZE)
+    return b64encode(secret)
 
 #Generates an RSA key
 #returns a tuple with public key as the first value and private key as the second
-def genRSAKey():
-	new_key = RSA.generate(2048, e=65537)
-	public_key = new_key.publickey().exportKey('PEM') 
-	private_key = new_key.exportKey('PEM') 
-	return (public_key, private_key)
+def gen_rsa_key():
+    """Create new keypair usable by RSA
+
+    :return: The private and public keys in PEM
+    :rtype: str, str
+    """
+
+    new_key = RSA.generate(2048, e=65537)
+    public_key = str(new_key.publickey().exportKey('PEM'))
+    private_key = str(new_key.exportKey('PEM'))
+
+    return public_key, private_key
 
 #Encrypts using AES
 #Arguments are the key, then the message
 #returns the encrypted message
-def encryptAES(key: str, msg: str) -> str:
+def aes_encrypt(key: str, msg: str) -> str:
     """Encrypt msg in AES with key
 
     :param key: The AES key encoded in base 64
@@ -50,7 +62,7 @@ def encryptAES(key: str, msg: str) -> str:
 #Decrypts using AES
 #Arguments are the key, then the encrypted message
 #returns the decrypted message
-def decryptAES(key: str, msg: str) -> str:
+def aes_decrypt(key: str, msg: str) -> str:
     """Decrypt msg in AES with key
 
     :param key: The AES key encoded in base 64
@@ -69,41 +81,61 @@ def decryptAES(key: str, msg: str) -> str:
 
     return decrypted
 
-#Encrypts using RSA public key
-#Arguments are public key and message
-#returns encrypted message
-def encryptRSA(pubKey, msg):
-	pubKeyObj =  RSA.importKey(pubKey)
-	encryptedMsg = pubKeyObj.encrypt(msg, 32)[0]
-	return encryptedMsg
+def rsa_encrypt(pub_key: str, msg: str) -> str:
+    """Encrypts using RSA public key
+    Arguments are public key and message
+    returns encrypted message
+    """
+    pubKeyObj =  RSA.importKey(pubKey)
+    encryptedMsg = pubKeyObj.encrypt(msg, 32)[0]
+    return encryptedMsg
 
-#Decrypts using RSA private key
-#Arguments are private key and encrypted message
-#returns decrypted message
-def decryptRSA(privKey, msg):
-	privKeyObj = RSA.importKey(privKey)
-	decryptedMsg = privKeyObj.decrypt(msg)
-	return decryptedMsg
+def rsa_decrypt(priv_key: str, msg: str) -> str:
+    """Decrypts using RSA private key
 
-#Encrypts using both AES and RSA
-#Arguments are AES key, then RSA public key, then message
-#returns tuple containing encrypted AES key, then encrypted message
-def encryptAESRSA(aesKey, rsaKey, msg):
-	encryptedMsg = encryptAES(aesKey, msg)
-	encryptedKey = encryptRSA(rsaKey, aesKey)
-	return (encryptedKey, encryptedMsg)
+    :param priv_key: The RSA private key
+    :param msg: The encrypted message
+    :return: The cleartext
+    :rtype: str
+    """
 
-#Decrypts using both AES and RSA
-#Arguments are encrypted AES key, then RSA private key, then encrypted message
-#returns the decrypted message
-def decryptAESRSA(aesKey, rsaKey, msg):
-	decryptedKey = decryptRSA(rsaKey, aesKey)
-	decryptedMsg = decryptAES(decryptedKey, msg)
-	return decryptedMsg
+    priv_key = RSA.importKey(priv_key)
+    decrypted = privKeyObj.decrypt(msg)
+    return decrypted
 
-#Encrypts using both AES and RSA after generating the AES key itself
-#Arguments are RSA public key, then message
-#returns tuple containing encrypted AES key, then encrypted message
-def easyEncrypt(rsaKey, msg):
-	return encryptAESRSA(genAESKey(), rsaKey, msg)
+def aes_rsa_encrypt(aes_key: str, rsa_key: str, msg: str):
+    """Encrypts using both AES and RSA
+    :param aes_key: The AES key
+    :param rsa_key: The RSA public key
+    :param msg: The message
+    :return: The encrypted AES key, the encrypted message
+    :rtype: str, str
+    """
+    encryptedMsg = aes_encrypt(aesKey, msg)
+    encryptedKey = rsa_encrypt(rsaKey, aesKey)
+    return (encryptedKey, encryptedMsg)
+
+def aes_rsa_decrypt(aes_key: str, rsaKey: str, msg: str) -> str:
+    """Decrypts using both AES and RSA
+
+    :param aes_key: The encrypted AES key
+    :param rsa_key: The RSA private key
+    :param msg: The encrypted message
+    :return: The decrypted message
+    :rtype: str
+    """
+
+    decrypted_key = rsa_decrypt(rsa_key, aes_key)
+    decrypted_msg = aes_decrypt(decrypted_key, msg)
+    return decrypted_msg
+
+def easy_encrypt(rsa_key: str, msg: str):
+    """Encrypts using both AES and RSA after generating the AES key itself
+
+    :param rsa_key: The RSA public key
+    :param msg: The message to encrypt
+    :return: The encrypted AES key, the encrypted message
+    :rtype: str, str
+    """
+    return aes_rsa_encrypt(gen_aes_key(), rsaKey, msg)
 

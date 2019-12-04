@@ -92,7 +92,7 @@ def wrap_layers(message, nodes, public_keys):
         if x == len(nodes) - 2:
             message = message + '###' + 'entrance'
 
-        encryptedKey, encryptedMsg = easyEncrypt(public_keys[x], message)
+        encryptedKey, encryptedMsg = easy_encrypt(public_keys[x], message)
         message = encryptedMsg + "###" + encryptedKey
     return message
 message = wrap_layers(mes, node_addr, pubkeys)
