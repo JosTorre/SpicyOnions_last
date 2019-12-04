@@ -13,7 +13,7 @@ PADDING = '{'
 def pad(msg: str) -> str:
     return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
 
-def gen_aes_key():
+def gen_aes_key() -> str:
     """Create new key usable by AES
 
     Generate a random secret key using urandom
@@ -34,8 +34,8 @@ def gen_rsa_key():
     """
 
     new_key = RSA.generate(2048, e=65537)
-    public_key = str(new_key.publickey().exportKey('PEM'))
-    private_key = str(new_key.exportKey('PEM'))
+    public_key = new_key.publickey().exportKey('PEM').decode()
+    private_key = new_key.exportKey('PEM').decode()
 
     return public_key, private_key
 
@@ -87,7 +87,7 @@ def rsa_encrypt(pub_key: str, msg: str) -> str:
     """
 
     pub_key_obj =  RSA.importKey(pub_key)
-    encrypted = pub_key_obj.encrypt(msg, 32)[0]
+    encrypted = pub_key_obj.encrypt(bytes(msg,"utf-8"), "")[0]
     return encrypted
 
 def rsa_decrypt(priv_key: str, msg: str) -> str:
@@ -99,8 +99,9 @@ def rsa_decrypt(priv_key: str, msg: str) -> str:
     :rtype: str
     """
 
-    priv_key = RSA.importKey(priv_key)
-    decrypted = privKeyObj.decrypt(msg)
+    priv_key_obj = RSA.importKey(priv_key)
+    decrypted = priv_key_obj.decrypt(msg).decode()
+
     return decrypted
 
 def aes_rsa_encrypt(aes_key: str, rsa_key: str, msg: str):
@@ -138,9 +139,3 @@ def easy_encrypt(rsa_key: str, msg: str):
     :rtype: str, str
     """
     return aes_rsa_encrypt(gen_aes_key(), rsa_key, msg)
-
-my_key = gen_aes_key()
-print(aes_decrypt(my_key,aes_encrypt(my_key,"Salut")))
-#pub, priv = gen_rsa_key()
-#ciphertext = easy_encrypt(pub, "salut")
-#print(ciphertext)
