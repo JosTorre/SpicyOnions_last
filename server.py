@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# coding : utf-8
+
 '''
 server.py
 Should act like a normal server
@@ -16,15 +19,13 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
 s.listen(1) #maximum 1 connection
 
-
-
 while 1:
 	conn, addr = s.accept()
 	addr = addr[0]
-	print 'Connection address:', addr
+	print('Connection address:', addr)
 	data = conn.recv(BUFFER_SIZE)
 	hashed = hashlib.sha224(data).hexdigest()
 	if not data: break
-	print "received data:", data
+	print("received data:", data)
 	conn.send(hashed)  # return hash
 conn.close()
