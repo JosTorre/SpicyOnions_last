@@ -11,8 +11,8 @@ On data coming back, decrypt and send to previous node
 '''
 
 import socket
-import sys
-from os import chmod
+from os import chmod, path
+import argparse
 from aes_rsa import *
 
 #DIR_IP = '172.17.224.57'
@@ -27,32 +27,42 @@ NUM_NODES = 3
 
 # Generate RSA Keys
 # -----------------------------
-RSAKeys = []
-AESKey = ""
-privateKeyFile = "privateRSA.key"
-publicKeyFile = "publicRSA.key"
+priv_key_file = "privateRSA.key"
+pub_key_file = "publicRSA.key"
 
-if len(sys.argv) == 2 and sys.argv[1] == "-genKey":
+
+# To put in config file
+#------------------------------------------------------
+# Code
+
+parser = argparse.ArgumentParser(description="The program will detect and use already existing key if no option is specified")
+parser.add_argument("-g","--generate-keys", action="store_true", help="Generate RSA keypair of node")
+args = parser.parse_args()
+
+if args.generate_keys:
     print("Generating RSA key pair.")
-    RSAKeys = genRSAKey()
-    with open(privateKeyFile, 'w') as myContent:
-        chmod(privateKeyFile, 0o600)
-        myContent.write(RSAKeys[1])
-    with open(publicKeyFile, 'w') as myContent:
-        chmod(privateKeyFile, 0o600)
-        myContent.write(RSAKeys[0])
+    pub_key, priv_key = gen_rsa_key()
 
-elif len(sys.argv) == 1:
-    print("importing keys")
+    with open(priv_key_file, 'w') as f:
+        chmod(priv_key_file, 0o600)
+        f.write(priv_key)
+
+    with open(pub_key_file, 'w') as f:
+        chmod(pub_key_file, 0o600)
+        f.write(pub_key)
+elif path.exists(pub_key_file) and path.exists(priv_key_file):
+    print("Importing keys")
+
+    try:
+        with open(pub_key_file,'rb') as f:
+            pub_key = f.read()
+        with open(priv_key_file,'rb') as f:
+            priv_key = f.read()
+    except:
+        print("Importing keys failed")
+        exit()
 else:
-    print("Incorrect arguments")
-    sys.exit()
-
-try:
-    publicRSA = open(publicKeyFile).read()
-    privateRSA = open(privateKeyFile).read()
-except:
-    print("importing keys failed")
+    parser.print_help()
     exit()
 
 DIR_IP = input("Directory server to connect to: ")

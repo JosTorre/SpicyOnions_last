@@ -28,4 +28,5 @@ while 1:
 	if not data: break
 	print("received data:", data)
 	conn.send(hashed)  # return hash
+
 conn.close()
