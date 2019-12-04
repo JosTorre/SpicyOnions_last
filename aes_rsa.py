@@ -1,21 +1,23 @@
+#!/usr/bin/env python3
+# coding: utf-8
+
 # This file contains functions used for multi-layered encryption
 import os
-import base64
-import Crypto
+from base64 import b64decode, b64encode
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 
 BLOCK_SIZE = 16
 PADDING = '{'
-pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING
-EncodeAES = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
-DecodeAES = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
+
+def pad(msg: str) -> str:
+    return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
 
 #Generates an AES key
 #Returns base64 encoded AES key
 def genAESKey():
 	secret = os.urandom(BLOCK_SIZE)
-	return base64.b64encode(secret)
+	return b64encode(secret)
 
 #Generates an RSA key
 #returns a tuple with public key as the first value and private key as the second
@@ -28,18 +30,44 @@ def genRSAKey():
 #Encrypts using AES
 #Arguments are the key, then the message
 #returns the encrypted message
-def encryptAES(key, msg):
-	cipher = AES.new(base64.b64decode(key))
-	encryptedMsg = EncodeAES(cipher, msg)
-	return encryptedMsg
+def encryptAES(key: str, msg: str) -> str:
+    """Encrypt msg in AES with key
+
+    :param key: The AES key encoded in base 64
+    :param msg: The message to encrypt
+    :type key: str
+    :type msg: str
+    :return: The encrypted message in base 64
+    :rtype: str
+    """
+    padded_msg = pad(msg)
+
+    cipher = AES.new(b64decode(key))
+    encrypted = cipher.encrypt(padded_msg)
+
+    return b64encode(encrypted)
 
 #Decrypts using AES
 #Arguments are the key, then the encrypted message
 #returns the decrypted message
-def decryptAES(key, msg):
-	decrypter = AES.new(base64.b64decode(key))
-	decryptedMsg = DecodeAES(decrypter, msg)
-	return decryptedMsg
+def decryptAES(key: str, msg: str) -> str:
+    """Decrypt msg in AES with key
+
+    :param key: The AES key encoded in base 64
+    :param msg: The message to decrypt encoded in base 64
+    :type key: str
+    :type msg: str
+    :return: The cleartext
+    :rtype: str
+    """
+
+    uncipher = AES.new(b64decode(key))
+    # Get the string representation
+    decrypted = uncipher.decrypt(b64decode(msg)).decode()
+    # Remove the padding put before
+    decrypted = decrypted.rstrip(PADDING)
+
+    return decrypted
 
 #Encrypts using RSA public key
 #Arguments are public key and message
@@ -78,3 +106,4 @@ def decryptAESRSA(aesKey, rsaKey, msg):
 #returns tuple containing encrypted AES key, then encrypted message
 def easyEncrypt(rsaKey, msg):
 	return encryptAESRSA(genAESKey(), rsaKey, msg)
+
