@@ -8,8 +8,8 @@ Should not know it is being accessed through onion routing
 Should send back the hash of the received message
 '''
 import socket
-from hashlib import sha224
 import configparser
+from hashlib import sha224
 
 CONFIG_FILE = "sweet_onions.cfg"
 
@@ -17,7 +17,7 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 IP = socket.gethostbyname(socket.gethostname())
-PORT = config['SERVER']['Port']
+PORT = config['DEFAULT']['Port']
 BUFFER_SIZE = config['SERVER']['BufferSize']
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -13,22 +13,21 @@ Client should do the following things in order:
 7. Compare returned hash to hash of sent packet
 8. Repeat from step 3
 '''
-import sys
-from os import chmod
 import socket
-import Crypto
-from Crypto.PublicKey import RSA
-from Crypto import Random
-import ast
-import random
-import hashlib
-import base64
+import configparser
+from random import randint, shuffle
+from hashlib import sha224
 from aes_rsa import *
 
+CONFIG_FILE = "sweet_onions.cfg"
+
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+
+
 #NUM_NODES = 3
-DIR_PORT = 1600
-TCP_PORT = 1601
-BUFFER_SIZE = 4096
+DIR_PORT = config["DEFAULT"]["DirectoryPort"]
+PORT = config["DEFAULT"]["Port"]
 DIR_NODE = '172.17.224.57' #change this
 
 TCP_IP = socket.gethostbyname(socket.gethostname())
@@ -51,7 +50,7 @@ dest_ip = input("Destination Address: ")
 mes = input("Message: ")
 
 # Save the hash of the message for integrity
-mes_hash = hashlib.sha224(mes).hexdigest()
+mes_hash = sha224(mes).hexdigest()
 
 
 # Parse response from the directory
@@ -70,10 +69,10 @@ for x in range(len(dir_arr)/2):
 
 
 # Generate a random route
-NUM_NODES = random.randint(2, NUM_ROUTERS)
+NUM_NODES = randint(2, NUM_ROUTERS)
 i = 0
 y = range(NUM_ROUTERS)
-random.shuffle(y)
+shuffle(y)
 pubkeys = []
 node_addr = [dest_ip]
 while i < NUM_NODES:
@@ -100,13 +99,13 @@ print(message)
 
 # Send Message
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((node_addr[i], TCP_PORT))
+s.connect((node_addr[i], PORT))
 s.send(message)
 s.close()
 
 # Recieve Message
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, TCP_PORT))
+s.bind((TCP_IP, PORT))
 s.listen(1)
 
 while 1:
