@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# coding: utf-8
+
 '''
 client.py
 Client should do the following things in order:
@@ -29,7 +32,7 @@ BUFFER_SIZE = 4096
 DIR_NODE = '172.17.224.57' #change this
 
 TCP_IP = socket.gethostbyname(socket.gethostname())
-DIR_NODE = raw_input("Directory server to connect to: ")
+DIR_NODE = input("Directory server to connect to: ")
 
 
 # Connect to directory
@@ -39,13 +42,13 @@ s.send('Client Request###')
 dir_data = s.recv(BUFFER_SIZE)
 print(dir_data)
 if dir_data and "Not ready yet" in dir_data: 
-	print("directory server not ready")
-	exit()
+    print("directory server not ready")
+    exit()
 s.close()
 
 # Get the destination server and message
-dest_ip = raw_input("Destination Address: ")
-mes =  raw_input("Message: ")
+dest_ip = input("Destination Address: ")
+mes = input("Message: ")
 
 # Save the hash of the message for integrity
 mes_hash = hashlib.sha224(mes).hexdigest()
@@ -107,14 +110,14 @@ s.bind((TCP_IP, TCP_PORT))
 s.listen(1)
 
 while 1:
-	conn, addr = s.accept()
-        addr = addr[0]
-	if addr == node_addr[len(node_addr) - 1]:
-		data = conn.recv(BUFFER_SIZE)
-		if data == mes_hash:
-			print "Received data matches hash: ", data
-			break
-		else:
-			print "Received data does not match hash: ", data
-			break
+    conn, addr = s.accept()
+    addr = addr[0]
+    if addr == node_addr[len(node_addr) - 1]:
+        data = conn.recv(BUFFER_SIZE)
+        if data == mes_hash:
+            print("Received data matches hash: ", data)
+            break
+        else:
+            print("Received data does not match hash: ", data)
+            break
 

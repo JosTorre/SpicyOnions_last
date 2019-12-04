@@ -1,3 +1,4 @@
 # keys
 *.key
 *~
+__pycache__
