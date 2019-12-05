@@ -11,24 +11,26 @@ On data coming back, decrypt and send to previous node
 '''
 
 import socket
-from os import chmod, path
 import argparse
+import configparser
+from os import chmod, path
 from aes_rsa import *
 
-#DIR_IP = '172.17.224.57'
-DIR_PORT = 1600
+CONFIG_FILE = "sweet_onions.cfg"
 
-TCP_IP = socket.gethostbyname(socket.gethostname())
-TCP_PORT = 1601
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
 
-BUFFER_SIZE = 4096 
-NODES = {}
-NUM_NODES = 3
+IP = socket.gethostbyname(socket.gethostname())
+DIR_PORT =  config['DIRECTORY']['Port']
+PORT = config['DEFAULT']['Port']
 
-# Generate RSA Keys
-# -----------------------------
-priv_key_file = "privateRSA.key"
-pub_key_file = "publicRSA.key"
+BUFFER_SIZE = config['DEFAULT']['BufferSize']
+node_list = {}
+number_of_nodes = 3
+
+priv_key_file = config['DEFAULT']['PrivateKeyFilename']
+pub_key_file = config['DEFAULT']['PublicKeyFilename']
 
 
 # To put in config file
@@ -82,16 +84,16 @@ s.listen(1)
 
 conn, addr = s.accept()
 addr = addr[0]
-myData = conn.recv(BUFFER_SIZE).split("###")
+data = conn.recv(BUFFER_SIZE).split("###")
 
-NUM_NODES = int(myData[0])
-myData = myData[1:]
+number_of_nodes = int(data[0])
+data = data[1:]
 
 print('Connection address:', addr)
 print("Return data from directory server: ")
-for x in range(NUM_NODES):
-    NODES[myData[2 * x]] = myData[2 * x + 1]
-    print(myData[2 * x] + ":" + myData[2 * x + 1])
+for x in range(number_of_nodes):
+    node_list[data[2 * x]] = data[2 * x + 1]
+    print(data[2 * x] + ":" + data[2 * x + 1])
 
 conn.close()
 s.close()
@@ -119,7 +121,7 @@ while 1:
 
     myEncryptedData = data.split("###")
     decryptedMessage = decryptAESRSA(myEncryptedData[1], privateRSA, myEncryptedData[0]).split("###")
-    nextNode = decryptedMessage[0]
+    next_node = decryptedMessage[0]
 
     # Entrance Node Case
     if len(decryptedMessage) == 4:
@@ -132,17 +134,17 @@ while 1:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Send to Next Node
-    if nextNode in NODES:
+    if next_node in NODES:
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((nextNode, TCP_PORT))
+        s.connect((next_node, TCP_PORT))
         s.send(decryptedMessage[1] + "###" + decryptedMessage[2])
         s.close()
         print("This is not an exit node. Nothing special here.")
         
     # Entrance Node
-    elif entranceFlag == "entrance" and not nextNode:
+    elif entranceFlag == "entrance" and not next_node:
 
         conn.close()
         s.close()
@@ -156,30 +158,30 @@ while 1:
         entranceAddr = ""
         
     # Exit Node - Send Data Back
-    elif nextNode not in NODES:
+    elif next_node not in node_list:
         conn.close()
         s.close()
         print("This is the exit node.")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((nextNode, TCP_PORT))
+        s.connect((next_node, TCP_PORT))
         s.send(decryptedMessage[1])
 
-        serverResponse = s.recv(BUFFER_SIZE)
+        server_response = s.recv(BUFFER_SIZE)
         s.close()
         
-        returnRoute = decryptedMessage[3:]
-        returnRoute.reverse()
-        returnMessage = serverResponse
+        return_route = decryptedMessage[3:]
+        return_route.reverse()
+        returnMessage = server_response
         print("Return Route: ")
-        print(returnRoute)
+        print(return_route)
         print("Decrypted Message:")
         print(decryptedMessage)
 
-        for x in range(len(returnRoute)):
+        for x in range(len(return_route)):
             returnMessage = "###" + returnMessage
             if x != 0:
-                returnMessage = returnRoute[x-1] + returnMessage
-            encryptedKey, encryptedMsg = easy_encrypt(NODES[returnRoute[x]], returnMessage)
+                returnMessage = return_route[x-1] + returnMessage
+            encryptedKey, encryptedMsg = easy_encrypt(node_list[return_route[x]], returnMessage)
             returnMessage = encryptedMsg + "###" + encryptedKey
             
         
