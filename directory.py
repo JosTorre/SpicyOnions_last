@@ -24,9 +24,9 @@ router_count = 0
 pub_keys = {}
 
 DIR_IP = socket.gethostbyname(socket.gethostname()) #'127.0.0.1' for testing
-DIR_PORT = config["DIRECTORY"]["Port"]
-NB_CONN = config["DIRECTORY"]["SimultaneousConnections"]
-BUFFER_SIZE = config["DIRECTORY"]["BufferSize"]
+DIR_PORT = int(config["DIRECTORY"]["Port"])
+NB_CONN = int(config["DIRECTORY"]["SimultaneousConnections"])
+BUFFER_SIZE = int(config["DIRECTORY"]["BufferSize"])
 
 directory_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 directory_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -88,7 +88,7 @@ directory_server.listen(NB_CONN)
 while 1:
     client_socket, client_address = directory_server.accept()
     client_address = client_address[0]
-        data_received = client_socket.recv(BUFFER_SIZE)
+    data_received = client_socket.recv(BUFFER_SIZE)
     
     data = data_received.split("###")
     # Initialization complete. 
