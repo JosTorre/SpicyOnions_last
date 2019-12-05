@@ -79,7 +79,7 @@ s.close()
 # Get Directory Data
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, DIR_PORT))
+s.bind((IP, DIR_PORT))
 s.listen(1)
 
 conn, addr = s.accept()
@@ -100,13 +100,12 @@ s.close()
 
 # Run Node
 # -----------------------------
-entranceFlag = ""
-entranceAddr = ""
-exitAddr = ""
+entrance_flag = ""
+entrance_addr = ""
 
 # Start Listening
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, TCP_PORT))
+s.bind((IP, PORT))
 s.listen(1)
 
 while 1:
@@ -119,15 +118,15 @@ while 1:
     if not data: break
     print("[Node Running] Received data: ", data)
 
-    myEncryptedData = data.split("###")
-    decryptedMessage = decryptAESRSA(myEncryptedData[1], privateRSA, myEncryptedData[0]).split("###")
-    next_node = decryptedMessage[0]
+    encrypted_data = data.split("###")
+    decrypted_message = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split("###")
+    next_node = decrypted_message[0]
 
     # Entrance Node Case
-    if len(decryptedMessage) == 4:
-        entranceFlag = decryptedMessage[3]
-        entranceAddr = addr
-        if decryptedMessage[3] == "entrance":
+    if len(decrypted_message) == 4:
+        entrance_flag = decrypted_message[3]
+        entrance_addr = addr
+        if decrypted_message[3] == "entrance":
             print("This is the entrance node receiving initial packet.")
         conn.close()
         s.close()
@@ -138,24 +137,23 @@ while 1:
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((next_node, TCP_PORT))
-        s.send(decryptedMessage[1] + "###" + decryptedMessage[2])
+        s.connect((next_node, PORT))
+        s.send(decrypted_message[1] + "###" + decrypted_message[2])
         s.close()
         print("This is not an exit node. Nothing special here.")
         
     # Entrance Node
-    elif entranceFlag == "entrance" and not next_node:
-
+    elif entrance_flag == "entrance" and not next_node:
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((entranceAddr, TCP_PORT))
+        s.connect((entrance_addr, PORT))
         # original's server response (at least it's supposed to be)
-        s.send(decryptedMessage[1])
+        s.send(decrypted_message[1])
         s.close()
         print("This is the entrance node returning to the client")
-        entranceFlag = ""
-        entranceAddr = ""
+        entrance_flag = ""
+        entrance_addr = ""
         
     # Exit Node - Send Data Back
     elif next_node not in node_list:
@@ -163,34 +161,34 @@ while 1:
         s.close()
         print("This is the exit node.")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((next_node, TCP_PORT))
-        s.send(decryptedMessage[1])
+        s.connect((next_node, PORT))
+        s.send(decrypted_message[1])
 
         server_response = s.recv(BUFFER_SIZE)
         s.close()
         
-        return_route = decryptedMessage[3:]
+        return_route = decrypted_message[3:]
         return_route.reverse()
-        returnMessage = server_response
+        return_message = server_response
         print("Return Route: ")
         print(return_route)
         print("Decrypted Message:")
-        print(decryptedMessage)
+        print(decrypted_message)
 
         for x in range(len(return_route)):
-            returnMessage = "###" + returnMessage
+            return_message = "###" + return_message
             if x != 0:
-                returnMessage = return_route[x-1] + returnMessage
-            encryptedKey, encryptedMsg = easy_encrypt(node_list[return_route[x]], returnMessage)
-            returnMessage = encryptedMsg + "###" + encryptedKey
+                return_message = return_route[x-1] + return_message
+            encrypted_key, encrypted_msg = easy_encrypt(node_list[return_route[x]], return_message)
+            return_message = encrypted_msg + "###" + encrypted_key
             
         
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((decryptedMessage[3], TCP_PORT))
-        s.send(returnMessage)
+        s.connect((decrypted_message[3], PORT))
+        s.send(return_message)
         s.close()
         
     # Continue Listening
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((TCP_IP, TCP_PORT))
+    s.bind((IP, PORT))
     s.listen(1)

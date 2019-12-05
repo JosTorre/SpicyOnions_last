@@ -30,7 +30,7 @@ DIR_PORT = config["DEFAULT"]["DirectoryPort"]
 PORT = config["DEFAULT"]["Port"]
 DIR_NODE = '172.17.224.57' #change this
 
-TCP_IP = socket.gethostbyname(socket.gethostname())
+IP = socket.gethostbyname(socket.gethostname())
 DIR_NODE = input("Directory server to connect to: ")
 
 
@@ -91,8 +91,8 @@ def wrap_layers(message, nodes, public_keys):
         if x == len(nodes) - 2:
             message = message + '###' + 'entrance'
 
-        encryptedKey, encryptedMsg = easy_encrypt(public_keys[x], message)
-        message = encryptedMsg + "###" + encryptedKey
+        encrypted_key, encrypted_msg = easy_encrypt(public_keys[x], message)
+        message = encrypted_msg + "###" + encrypted_key
     return message
 message = wrap_layers(mes, node_addr, pubkeys)
 print(message)
@@ -103,9 +103,9 @@ s.connect((node_addr[i], PORT))
 s.send(message)
 s.close()
 
-# Recieve Message
+# Receive Message
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((TCP_IP, PORT))
+s.bind((IP, PORT))
 s.listen(1)
 
 while 1:
