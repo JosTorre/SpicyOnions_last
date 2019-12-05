@@ -22,15 +22,15 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 IP = socket.gethostbyname(socket.gethostname())
-DIR_PORT =  config['DIRECTORY']['Port']
-PORT = config['DEFAULT']['Port']
+DIR_PORT = int(config['DIRECTORY']['Port'])
+PORT = int(config['DEFAULT']['Port'])
 
-BUFFER_SIZE = config['DEFAULT']['BufferSize']
+BUFFER_SIZE = int(config['DEFAULT']['BufferSize'])
 node_list = {}
 number_of_nodes = 3
 
-priv_key_file = config['DEFAULT']['PrivateKeyFilename']
-pub_key_file = config['DEFAULT']['PublicKeyFilename']
+priv_key_file = config['NODE']['PrivateKeyFilename']
+pub_key_file = config['NODE']['PublicKeyFilename']
 
 
 # To put in config file
