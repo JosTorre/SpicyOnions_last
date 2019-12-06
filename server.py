@@ -17,21 +17,22 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 IP = socket.gethostbyname(socket.gethostname())
-PORT = config['DEFAULT']['Port']
-BUFFER_SIZE = config['SERVER']['BufferSize']
+PORT = int(config['DEFAULT']['Port'])
+BUFFER_SIZE = int(config['SERVER']['BufferSize'])
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((IP, PORT))
 s.listen(1) #maximum 1 connection
+print("Connection opened on {}:{}".format(IP,PORT))
 
 while 1:
 	conn, addr = s.accept()
 	addr = addr[0]
-	print('Connection address:', addr)
+	print('Connection from {}'.format(addr))
 	data = conn.recv(BUFFER_SIZE)
 	hashed = sha224(data).hexdigest()
 	if not data: break
-	print("Received data:", data)
-	conn.send(hashed)  # return hash
+	print("Received : {}".format(data))
+	conn.send(bytes(hashed + '\n',"utf-8"))
 
 conn.close()
