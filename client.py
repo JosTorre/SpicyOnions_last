@@ -30,6 +30,10 @@ DIR_PORT = int(config["DIRECTORY"]["Port"])
 PORT = int(config["DEFAULT"]["Port"])
 BUFFER_SIZE = int(config["DEFAULT"]["BufferSize"])
 
+SEP: str = config["MESSAGES"]["Separator"]
+CLIENT_REQ: str = config["MESSAGES"]["ClientRequest"]
+NOT_READY_MSG: str = config["MESSAGES"]["NotReady"]
+
 IP = socket.gethostbyname(socket.gethostname())
 DIR_NODE = input("Directory server to connect to: ")
 
@@ -52,17 +56,18 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
 # Connect to directory
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_NODE, DIR_PORT))
-s.send(b'Client Request###')
+s.send(bytes(CLIENT_REQ + SEP,"utf-8"))
+
 dir_data = s.recv(BUFFER_SIZE).decode()
-print(dir_data)
-if dir_data and "Not ready yet" in dir_data: 
+if dir_data and NOT_READY_MSG in dir_data: 
     print("Directory server not ready")
     exit()
 s.close()
 
+print(dir_data)
 # Get the destination server and message
-dest_ip = input("Destination Address: ")
-msg: str = input("Message: ")
+dest_ip: str = input("Destination Address: ")
+msg: bytes = bytes(input("Message: "),"utf-8")
 
 # Save the hash of the message for integrity
 msg_hash: str = sha224(msg).hexdigest()
@@ -70,7 +75,8 @@ msg_hash: str = sha224(msg).hexdigest()
 
 # Parse response from the directory
 dir_arr = dir_data.split(SEP)
-NUM_ROUTERS = int(dir_arr[0])
+print(dir_arr)
+NUM_ROUTERS: int = int(dir_arr[0])
 dir_arr = dir_arr[1:]
 
 # parse the directory data string
