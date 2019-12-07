@@ -12,27 +12,28 @@ import configparser
 from time import sleep
 from aes_rsa import *
 
+# Read configuration
 CONFIG_FILE = "sweet_onions.cfg"
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-NUM_ROUTERS = int(input("Number of routers before running: "))
-NUM_NODES = config["DIRECTORY"]["NumberNode"]
-
-NOT_READY_MSG = bytes(config["MESSAGES"]["NotReady"],"utf-8")
-CLIENT_REQ = config["MESSAGES"]["ClientRequest"]
-ONION_ROUTER = config["MESSAGES"]["OnionRouter"]
+NUM_ROUTERS: int = int(input("Number of routers before running: "))
+NUM_NODES: int = config["DIRECTORY"]["NumberNode"]
+NOT_READY_MSG: bytes = bytes(config["MESSAGES"]["NotReady"],"utf-8")
+CLIENT_MSG: str = config["MESSAGES"]["ClientRequest"]
+ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
 SEP = config["MESSAGES"]["Separator"]
 
-router_count = 0
+DIR_PORT: int = int(config["DIRECTORY"]["Port"])
+NB_CONN: int = int(config["DIRECTORY"]["SimultaneousConnections"])
+BUFFER_SIZE: int = int(config["DIRECTORY"]["BufferSize"])
+
+DIR_IP: str = socket.gethostbyname(socket.gethostname())
+router_count: int = 0
 pub_keys = {}
 
-DIR_IP = socket.gethostbyname(socket.gethostname()) #'127.0.0.1' for testing
-DIR_PORT = int(config["DIRECTORY"]["Port"])
-NB_CONN = int(config["DIRECTORY"]["SimultaneousConnections"])
-BUFFER_SIZE = int(config["DIRECTORY"]["BufferSize"])
-
+# Open socket
 directory_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 directory_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 directory_server.bind((DIR_IP, DIR_PORT))
@@ -50,30 +51,35 @@ while router_count < NUM_ROUTERS:
     if data[0].strip() == ONION_ROUTER:
         pub_keys[client_address] = data[1].strip() #add to the dictionary
         router_count += 1
-        print("\t| Public key received") #print("Onion router information received :\n{}\n".format(data[1]))
+        print("\t| Public key received")
+
     # If a client connects too early, tell it...
-    elif data[0].strip() == CLIENT_REQ:
+    elif data[0].strip() == CLIENT_MSG:
         client_socket.send(NOT_READY_MSG)
-        print("\t| Not ready signal sent") #print("Onion router information received :\n{}\n".format(data[1]))
+        print("\t| Not ready signal sent")
 
     client_socket.close()
 
+# Print all registered nodes
 print("Dictionary of nodes:")
 for addr in pub_keys:
     print(addr + " : " + pub_keys[addr])
 
+# Close directory server
 directory_server.close()
 sleep(1)
 
 #Sending serialized dictionary to all nodes
-message = str(NUM_ROUTERS)
+directory_content = bytes(NUM_ROUTERS)
 for key in pub_keys:
-    message += SEP + str(key) + SEP + str(pub_keys[key])
+    directory_content += bytes(SEP + str(key) + SEP + str(pub_keys[key]), "utf-8")
+print(directory_content)
 
+# Send all public keys to nodes
 for addr in pub_keys:
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     conn.connect((addr, DIR_PORT))
-    conn.send(bytes(message,"utf-8"))
+    conn.send(directory_content)
     conn.close()
 
 sleep(1)
@@ -97,9 +103,9 @@ while 1:
     
     data = data_received.split(SEP)
     # Initialization complete. 
-    if CLIENT_REQ == data[0]:
+    if CLIENT_MSG == data[0]:
         # Send client the dictionary of nodes as well
-        client_socket.send(message)
+        client_socket.send(directory_content)
     
     client_socket.close()
 

@@ -33,6 +33,13 @@ The following is a video demo of SweetOnions running across six machines: https:
 
 The following is a breakdown of what each aspect of the project accomplishes. 
 
+Firstly in a general manner :
+
+* The directory server waits for the operational nodes addresses and public keys
+* The nodes send their public keys at launch time
+* When the directory has every key it sends the dictionnary to all nodes
+* Then it sends the dictionnary for each client request
+
 ### 1. client.py
 
 This is the front-end tool that allows users to send and receive messages from the server. Upon receiving the message from the server, the client will compare the hashes of the sent and received messages to ensure integrity. 

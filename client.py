@@ -20,22 +20,21 @@ from random import randint, shuffle
 from hashlib import sha224
 from aes_rsa import *
 
+# Read configuration
 CONFIG_FILE = "sweet_onions.cfg"
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-
-DIR_PORT = int(config["DIRECTORY"]["Port"])
-PORT = int(config["DEFAULT"]["Port"])
-BUFFER_SIZE = int(config["DEFAULT"]["BufferSize"])
-
+DIR_PORT: int = int(config["DIRECTORY"]["Port"])
+PORT: int = int(config["DEFAULT"]["Port"])
+BUFFER_SIZE: int = int(config["DEFAULT"]["BufferSize"])
 SEP: str = config["MESSAGES"]["Separator"]
 CLIENT_REQ: str = config["MESSAGES"]["ClientRequest"]
 NOT_READY_MSG: str = config["MESSAGES"]["NotReady"]
 
-IP = socket.gethostbyname(socket.gethostname())
-DIR_NODE = input("Directory server to connect to: ")
+IP: str = socket.gethostbyname(socket.gethostname())
+DIR_NODE: str = input("Directory server to connect to: ")
 
 # front of nodes is server ip, back of nodes is entrance node
 def wrap_layers(message: str, nodes, public_keys) -> str:
@@ -56,22 +55,21 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
 # Connect to directory
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_NODE, DIR_PORT))
-s.send(bytes(CLIENT_REQ + SEP,"utf-8"))
 
+# Send and receive message from directory
+s.send(bytes(CLIENT_REQ + SEP,"utf-8"))
 dir_data = s.recv(BUFFER_SIZE).decode()
-if dir_data and NOT_READY_MSG in dir_data: 
-    print("Directory server not ready")
-    exit()
+# Then close the connection
 s.close()
 
-print(dir_data)
+if not dir_data or NOT_READY_MSG in dir_data: 
+    print("Directory server not ready")
+    exit()
+
 # Get the destination server and message
 dest_ip: str = input("Destination Address: ")
 msg: bytes = bytes(input("Message: "),"utf-8")
-
-# Save the hash of the message for integrity
 msg_hash: str = sha224(msg).hexdigest()
-
 
 # Parse response from the directory
 dir_arr = dir_data.split(SEP)

@@ -16,30 +16,24 @@ import configparser
 from os import chmod, path
 from aes_rsa import *
 
+# Read configuration
 CONFIG_FILE = "sweet_onions.cfg"
 
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-IP = socket.gethostbyname(socket.gethostname())
 DIR_PORT = int(config['DIRECTORY']['Port'])
-TEST_PORT = int(config['DEFAULT']['TestPort'])
-PORT = int(config['DEFAULT']['Port'])
+ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
+SEP: str = config["MESSAGES"]["Separator"]
+priv_key_file: str = config['NODE']['PrivateKeyFilename']
+pub_key_file: str = config['NODE']['PublicKeyFilename']
+PORT: int = int(config['DEFAULT']['Port'])
+BUFFER_SIZE: str = int(config['DEFAULT']['BufferSize'])
 
-ONION_ROUTER = config["MESSAGES"]["OnionRouter"]
-SEP = config["MESSAGES"]["Separator"]
-
-BUFFER_SIZE = int(config['DEFAULT']['BufferSize'])
+IP = socket.gethostbyname(socket.gethostname())
 node_list = {}
 
-priv_key_file = config['NODE']['PrivateKeyFilename']
-pub_key_file = config['NODE']['PublicKeyFilename']
-
-
-# To put in config file
-#------------------------------------------------------
-# Code
-
+# Parse command line arguments
 parser = argparse.ArgumentParser(description="The program will detect and use already existing key if no option is specified")
 parser.add_argument("-g","--generate-keys", action="store_true", help="Generate RSA keypair of node")
 args = parser.parse_args()
@@ -55,8 +49,9 @@ if args.generate_keys:
     with open(pub_key_file, 'w') as f:
         chmod(pub_key_file, 0o600)
         f.write(pub_key)
+
 elif path.exists(pub_key_file) and path.exists(priv_key_file):
-    print("Importing keys")
+    print("Importing RSA key pair.")
 
     try:
         with open(pub_key_file,'r') as f:
@@ -70,26 +65,27 @@ else:
     parser.print_help()
     exit()
 
-DIR_IP = input("Directory server to connect to: ")
+# Send public key to directory
+DIR_IP: str = input("Directory server to connect to: ")
 print("Sending request to directory server.")
-# Update Directory
-# -----------------------------
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
 s.send(bytes(ONION_ROUTER + SEP + pub_key,"utf-8"))
 s.close()
 
-# Get Directory Data
-# -----------------------------
+# Listen in order to get data from directory
+print("Listen for public keys on {}:{}".format(IP,DIR_PORT))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((IP, TEST_PORT))
+s.bind((IP, DIR_PORT))
 s.listen(1)
 
 conn, addr = s.accept()
 addr = addr[0]
-data = conn.recv(BUFFER_SIZE).split(SEP)
+data = conn.recv(BUFFER_SIZE).decode().split(SEP)
+print(data)
 
-number_of_nodes = int(data[0])
+number_of_nodes: int = int(data[0])
 data = data[1:]
 
 print('Connection address: {}'.format(addr))
