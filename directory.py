@@ -20,6 +20,11 @@ config.read(CONFIG_FILE)
 NUM_ROUTERS = int(input("Number of routers before running: "))
 NUM_NODES = config["DIRECTORY"]["NumberNode"]
 
+NOT_READY_MSG = bytes(config["MESSAGES"]["NotReady"],"utf-8")
+CLIENT_REQ = config["MESSAGES"]["ClientRequest"]
+ONION_ROUTER = config["MESSAGES"]["OnionRouter"]
+SEP = config["MESSAGES"]["Separator"]
+
 router_count = 0
 pub_keys = {}
 
@@ -37,37 +42,37 @@ directory_server.listen(NB_CONN)
 while router_count < NUM_ROUTERS:
     client_socket, client_address = directory_server.accept()
     client_address = client_address[0]
-    data_received = client_socket.recv(BUFFER_SIZE)
-    print("Connection from: " + str(client_address))
+    data_received = client_socket.recv(BUFFER_SIZE).decode()
+    print("Connection from: {}".format(client_address))
     
     # Initialization: Communicate with all onion routers until all keys are stored.    
-    data = data_received.split("###")
-    if data[0].strip() == "Onion Router":
+    data = data_received.split(SEP)
+    if data[0].strip() == ONION_ROUTER:
         pub_keys[client_address] = data[1].strip() #add to the dictionary
         router_count += 1
         print("Onion router information received :\n{}\n".format(data[1]))
     
     # If a client connects too early, tell it...
-    elif data[0].strip() == "Client Request":
-        client_socket.send("Not ready yet")
+    elif data[0].strip() == CLIENT_REQ:
+        client_socket.send(NOT_READY_MSG)
     client_socket.close()
 
 print("Dictionary of nodes:")
-for key in pub_keys:
-    print(x + " : " + pub_keys[x])
+for addr in pub_keys:
+    print(addr + " : " + pub_keys[addr])
 
 directory_server.close()
 sleep(1)
 
 #Sending serialized dictionary to all nodes
-message = ""                                                 
-for key in pub_keys.keys():
-    message += "###" + str(key) + "###" + str(pub_keys[key])
-message = str(NUM_ROUTERS) + "###" + message[3:]
-for key in pub_keys.keys():
+message = str(NUM_ROUTERS)
+for key in pub_keys:
+    message += SEP + str(key) + SEP + str(pub_keys[key])
+
+for addr in pub_keys:
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    conn.connect((str(key), DIR_PORT))
-    conn.send(message)
+    conn.connect((addr, DIR_PORT))
+    conn.send(bytes(message,"utf-8"))
     conn.close()
 
 sleep(1)
@@ -87,13 +92,11 @@ directory_server.listen(NB_CONN)
 # Wait for clients to connect
 while 1:
     client_socket, client_address = directory_server.accept()
-    client_address = client_address[0]
-    data_received = client_socket.recv(BUFFER_SIZE)
+    data_received = client_socket.recv(BUFFER_SIZE).decode()
     
-    data = data_received.split("###")
+    data = data_received.split(SEP)
     # Initialization complete. 
-    if "Client Request" == data[0]:
-
+    if CLIENT_REQ == data[0]:
         # Send client the dictionary of nodes as well
         client_socket.send(message)
     

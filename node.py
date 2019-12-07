@@ -23,11 +23,11 @@ config.read(CONFIG_FILE)
 
 IP = socket.gethostbyname(socket.gethostname())
 DIR_PORT = int(config['DIRECTORY']['Port'])
+TEST_PORT = int(config['DEFAULT']['TestPort'])
 PORT = int(config['DEFAULT']['Port'])
 
 BUFFER_SIZE = int(config['DEFAULT']['BufferSize'])
 node_list = {}
-number_of_nodes = 3
 
 priv_key_file = config['NODE']['PrivateKeyFilename']
 pub_key_file = config['NODE']['PublicKeyFilename']
@@ -73,23 +73,23 @@ print("Sending request to directory server.")
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send('Onion Router###' + pub_key)
+s.send(bytes(ONION_ROUTER + SEP + pub_key))
 s.close()
 
 # Get Directory Data
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((IP, DIR_PORT))
+s.bind((IP, TEST_PORT))
 s.listen(1)
 
 conn, addr = s.accept()
 addr = addr[0]
-data = conn.recv(BUFFER_SIZE).split("###")
+data = conn.recv(BUFFER_SIZE).split(SEP)
 
 number_of_nodes = int(data[0])
 data = data[1:]
 
-print('Connection address:', addr)
+print('Connection address: {}'.format(addr))
 print("Return data from directory server: ")
 for x in range(number_of_nodes):
     node_list[data[2 * x]] = data[2 * x + 1]
@@ -113,37 +113,37 @@ while 1:
     addr = addr[0]
     data = conn.recv(BUFFER_SIZE)
 
-    print("[Node Running] Connection address: ", addr)
+    print("[Node Running] Connection address: {}".format(addr))
 
     if not data: break
-    print("[Node Running] Received data: ", data)
+    print("[Node Running] Received data: {}".format(data))
 
-    encrypted_data = data.split("###")
-    decrypted_message = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split("###")
+    encrypted_data = data.split(SEP)
+    decrypted_message = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split(SEP)
     next_node = decrypted_message[0]
 
     # Entrance Node Case
     if len(decrypted_message) == 4:
         entrance_flag = decrypted_message[3]
         entrance_addr = addr
-        if decrypted_message[3] == "entrance":
+        if decrypted_message[3] == ENTRANCE:
             print("This is the entrance node receiving initial packet.")
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Send to Next Node
-    if next_node in NODES:
+    if next_node in node_list:
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((next_node, PORT))
-        s.send(decrypted_message[1] + "###" + decrypted_message[2])
+        s.send(decrypted_message[1] + SEP + decrypted_message[2])
         s.close()
         print("This is not an exit node. Nothing special here.")
         
     # Entrance Node
-    elif entrance_flag == "entrance" and not next_node:
+    elif entrance_flag == ENTRANCE and not next_node:
         conn.close()
         s.close()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -170,17 +170,15 @@ while 1:
         return_route = decrypted_message[3:]
         return_route.reverse()
         return_message = server_response
-        print("Return Route: ")
-        print(return_route)
-        print("Decrypted Message:")
-        print(decrypted_message)
+        print("Return Route: {}".format(return_route))
+        print("Decrypted Message: {}".format(decrypted_message))
 
         for x in range(len(return_route)):
-            return_message = "###" + return_message
+            return_message = SEP + return_message
             if x != 0:
                 return_message = return_route[x-1] + return_message
             encrypted_key, encrypted_msg = easy_encrypt(node_list[return_route[x]], return_message)
-            return_message = encrypted_msg + "###" + encrypted_key
+            return_message = encrypted_msg + SEP + encrypted_key
             
         
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

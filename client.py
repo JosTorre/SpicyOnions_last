@@ -3,6 +3,7 @@
 
 '''
 client.py
+
 Client should do the following things in order:
 1. Get list of node ip addresses and public keys from directory node
 2. Pick a random ordering of 3 of these nodes
@@ -25,36 +26,50 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 
-#NUM_NODES = 3
-DIR_PORT = config["DEFAULT"]["DirectoryPort"]
-PORT = config["DEFAULT"]["Port"]
-DIR_NODE = '172.17.224.57' #change this
+DIR_PORT = int(config["DIRECTORY"]["Port"])
+PORT = int(config["DEFAULT"]["Port"])
+BUFFER_SIZE = int(config["DEFAULT"]["BufferSize"])
 
 IP = socket.gethostbyname(socket.gethostname())
 DIR_NODE = input("Directory server to connect to: ")
+
+# front of nodes is server ip, back of nodes is entrance node
+def wrap_layers(message: str, nodes, public_keys) -> str:
+    for x in nodes[1:]:
+        message += SEP + x
+
+    for x in range(len(nodes) - 1):
+        message = nodes[x] + SEP + message
+        if x == len(nodes) - 2:
+            message = message + SEP + 'entrance'
+
+        encrypted_key, encrypted_msg = easy_encrypt(public_keys[x], message)
+        message = encrypted_msg + SEP + encrypted_key
+
+    return message
 
 
 # Connect to directory
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_NODE, DIR_PORT))
-s.send('Client Request###')
-dir_data = s.recv(BUFFER_SIZE)
+s.send(b'Client Request###')
+dir_data = s.recv(BUFFER_SIZE).decode()
 print(dir_data)
 if dir_data and "Not ready yet" in dir_data: 
-    print("directory server not ready")
+    print("Directory server not ready")
     exit()
 s.close()
 
 # Get the destination server and message
 dest_ip = input("Destination Address: ")
-mes = input("Message: ")
+msg: str = input("Message: ")
 
 # Save the hash of the message for integrity
-mes_hash = sha224(mes).hexdigest()
+msg_hash: str = sha224(msg).hexdigest()
 
 
 # Parse response from the directory
-dir_arr = dir_data.split("###")
+dir_arr = dir_data.split(SEP)
 NUM_ROUTERS = int(dir_arr[0])
 dir_arr = dir_arr[1:]
 
@@ -82,19 +97,7 @@ while i < NUM_NODES:
 
 
 print("UP TO WRAPPING LAYERS")
-# front of nodes is server ip, back of nodes is entrance node
-def wrap_layers(message, nodes, public_keys):
-    for x in nodes[1:]:
-        message += "###" + x
-    for x in range(len(nodes) - 1):
-        message = nodes[x] + '###' + message
-        if x == len(nodes) - 2:
-            message = message + '###' + 'entrance'
-
-        encrypted_key, encrypted_msg = easy_encrypt(public_keys[x], message)
-        message = encrypted_msg + "###" + encrypted_key
-    return message
-message = wrap_layers(mes, node_addr, pubkeys)
+message = wrap_layers(msg, node_addr, pubkeys)
 print(message)
 
 # Send Message
@@ -112,11 +115,11 @@ while 1:
     conn, addr = s.accept()
     addr = addr[0]
     if addr == node_addr[len(node_addr) - 1]:
-        data = conn.recv(BUFFER_SIZE)
-        if data == mes_hash:
-            print("Received data matches hash: ", data)
+        data = conn.recv(BUFFER_SIZE).decode()
+        if data == msg_hash:
+            print("Received data matches hash: {}".format(data))
             break
         else:
-            print("Received data does not match hash: ", data)
+            print("Received data does not match hash: {}".format(data))
             break
 
