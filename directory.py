@@ -43,18 +43,19 @@ while router_count < NUM_ROUTERS:
     client_socket, client_address = directory_server.accept()
     client_address = client_address[0]
     data_received = client_socket.recv(BUFFER_SIZE).decode()
-    print("Connection from: {}".format(client_address))
+    print("Connection from: {}".format(client_address),end="")
     
     # Initialization: Communicate with all onion routers until all keys are stored.    
     data = data_received.split(SEP)
     if data[0].strip() == ONION_ROUTER:
         pub_keys[client_address] = data[1].strip() #add to the dictionary
         router_count += 1
-        print("Onion router information received :\n{}\n".format(data[1]))
-    
+        print("\t| Public key received") #print("Onion router information received :\n{}\n".format(data[1]))
     # If a client connects too early, tell it...
     elif data[0].strip() == CLIENT_REQ:
         client_socket.send(NOT_READY_MSG)
+        print("\t| Not ready signal sent") #print("Onion router information received :\n{}\n".format(data[1]))
+
     client_socket.close()
 
 print("Dictionary of nodes:")
