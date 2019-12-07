@@ -11,6 +11,11 @@ BLOCK_SIZE = 16
 PADDING = '{'
 
 def pad(msg: str) -> str:
+    """Pad message in order to have 16 bytes blocks
+
+    :return: The padded message
+    :rtype: str
+    """
     return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
 
 def gen_aes_key() -> str:
@@ -21,8 +26,8 @@ def gen_aes_key() -> str:
     :return: The key encoded in base 64
     :rtype: str
     """
-    secret = urandom(BLOCK_SIZE)
-    return b64encode(secret)
+    secret: bytes = urandom(BLOCK_SIZE)
+    return b64encode(secret).decode()
 
 def gen_rsa_key():
     """Create new keypair usable by RSA
@@ -34,12 +39,12 @@ def gen_rsa_key():
     """
 
     new_key = RSA.generate(2048, e=65537)
-    public_key = new_key.publickey().exportKey('PEM').decode()
-    private_key = new_key.exportKey('PEM').decode()
+    public_key: str = new_key.publickey().exportKey('PEM').decode()
+    private_key: str = new_key.exportKey('PEM').decode()
 
     return public_key, private_key
 
-def aes_encrypt(key: str, msg: str) -> bytes:
+def aes_encrypt(key: str, msg: str) -> str:
     """Encrypt msg in AES with key
 
     :param key: The AES key encoded in base 64
@@ -47,32 +52,32 @@ def aes_encrypt(key: str, msg: str) -> bytes:
     :type key: str
     :type msg: str
     :return: The encrypted message in base 64
-    :rtype: bytes
+    :rtype: str
     """
-    padded_msg = pad(msg)
+    padded_msg: str = pad(msg)
 
     cipher = AES.new(b64decode(key))
-    encrypted = cipher.encrypt(padded_msg)
+    encrypted: bytes = cipher.encrypt(padded_msg)
 
-    return b64encode(encrypted)
+    return b64encode(encrypted).decode()
 
 #Decrypts using AES
 #Arguments are the key, then the encrypted message
 #returns the decrypted message
-def aes_decrypt(key: str, msg: bytes) -> str:
+def aes_decrypt(key: str, msg: str) -> str:
     """Decrypt msg in AES with key
 
     :param key: The AES key encoded in base 64
     :param msg: The message to decrypt encoded in base 64
     :type key: str
-    :type msg: bytes
+    :type msg: str
     :return: The cleartext
     :rtype: str
     """
 
     uncipher = AES.new(b64decode(key))
     # Get the string representation
-    decrypted = uncipher.decrypt(b64decode(msg)).decode()
+    decrypted: str = uncipher.decrypt(b64decode(bytes(msg,"utf-8")).decode()
     # Remove the padding put before
     decrypted = decrypted.rstrip(PADDING)
 

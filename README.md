@@ -40,6 +40,8 @@ Firstly in a general manner :
 * When the directory has every key it sends the dictionnary to all nodes
 * Then it sends the dictionnary for each client request
 
+We will tend to use mainly strings and cast to bytes when necessary
+
 ### 1. client.py
 
 This is the front-end tool that allows users to send and receive messages from the server. Upon receiving the message from the server, the client will compare the hashes of the sent and received messages to ensure integrity. 
