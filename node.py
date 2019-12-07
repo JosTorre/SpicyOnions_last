@@ -26,6 +26,9 @@ DIR_PORT = int(config['DIRECTORY']['Port'])
 TEST_PORT = int(config['DEFAULT']['TestPort'])
 PORT = int(config['DEFAULT']['Port'])
 
+ONION_ROUTER = config["MESSAGES"]["OnionRouter"]
+SEP = config["MESSAGES"]["Separator"]
+
 BUFFER_SIZE = int(config['DEFAULT']['BufferSize'])
 node_list = {}
 
@@ -73,7 +76,7 @@ print("Sending request to directory server.")
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send(bytes(ONION_ROUTER + SEP + pub_key))
+s.send(bytes(ONION_ROUTER + SEP,"utf-8") + pub_key)
 s.close()
 
 # Get Directory Data
