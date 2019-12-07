@@ -59,9 +59,9 @@ elif path.exists(pub_key_file) and path.exists(priv_key_file):
     print("Importing keys")
 
     try:
-        with open(pub_key_file,'rb') as f:
+        with open(pub_key_file,'r') as f:
             pub_key = f.read()
-        with open(priv_key_file,'rb') as f:
+        with open(priv_key_file,'r') as f:
             priv_key = f.read()
     except:
         print("Importing keys failed")
@@ -76,7 +76,7 @@ print("Sending request to directory server.")
 # -----------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send(bytes(ONION_ROUTER + SEP,"utf-8") + pub_key)
+s.send(bytes(ONION_ROUTER + SEP + pub_key,"utf-8"))
 s.close()
 
 # Get Directory Data
