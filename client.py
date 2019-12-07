@@ -73,7 +73,6 @@ msg_hash: str = sha224(msg).hexdigest()
 
 # Parse response from the directory
 dir_arr = dir_data.split(SEP)
-print(dir_arr)
 NUM_ROUTERS: int = int(dir_arr[0])
 dir_arr = dir_arr[1:]
 
@@ -81,8 +80,7 @@ dir_arr = dir_arr[1:]
 in_keys = []
 in_addr = []
 print("RECEIVED")
-print(dir_arr)
-for x in range(len(dir_arr)/2):
+for x in range(int(len(dir_arr)/2)):
     in_addr.append(dir_arr[2*x])
     in_keys.append(dir_arr[2*x + 1])
 
@@ -90,7 +88,7 @@ for x in range(len(dir_arr)/2):
 # Generate a random route
 NUM_NODES = randint(2, NUM_ROUTERS)
 i = 0
-y = range(NUM_ROUTERS)
+y = list(range(NUM_ROUTERS))
 shuffle(y)
 pubkeys = []
 node_addr = [dest_ip]

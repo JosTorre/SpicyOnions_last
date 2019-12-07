@@ -18,17 +18,16 @@ CONFIG_FILE = "sweet_onions.cfg"
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-NUM_ROUTERS: int = int(input("Number of routers before running: "))
 NUM_NODES: int = config["DIRECTORY"]["NumberNode"]
 NOT_READY_MSG: bytes = bytes(config["MESSAGES"]["NotReady"],"utf-8")
 CLIENT_MSG: str = config["MESSAGES"]["ClientRequest"]
 ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
-SEP = config["MESSAGES"]["Separator"]
-
+SEP: str = config["MESSAGES"]["Separator"]
 DIR_PORT: int = int(config["DIRECTORY"]["Port"])
 NB_CONN: int = int(config["DIRECTORY"]["SimultaneousConnections"])
 BUFFER_SIZE: int = int(config["DIRECTORY"]["BufferSize"])
 
+NUM_ROUTERS: int = int(input("Number of routers before running: "))
 DIR_IP: str = socket.gethostbyname(socket.gethostname())
 router_count: int = 0
 pub_keys = {}
@@ -70,7 +69,7 @@ directory_server.close()
 sleep(1)
 
 #Sending serialized dictionary to all nodes
-directory_content = bytes(NUM_ROUTERS)
+directory_content = bytes(str(NUM_ROUTERS),"utf-8")
 for key in pub_keys:
     directory_content += bytes(SEP + str(key) + SEP + str(pub_keys[key]), "utf-8")
 print(directory_content)
