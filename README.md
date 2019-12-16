@@ -40,7 +40,7 @@ Firstly in a general manner :
 * When the directory has every key it sends the dictionnary to all nodes
 * Then it sends the dictionnary for each client request
 
-We will tend to use mainly strings and cast to bytes when necessary
+We will tend to use mainly bytes and cast to string when necessary
 
 ### 1. client.py
 

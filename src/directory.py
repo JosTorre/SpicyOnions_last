@@ -8,6 +8,7 @@ their information (i.e. changing public keys, etc.).
 """
 
 import socket
+import argparse
 import configparser
 from time import sleep
 from aes_rsa import *
@@ -26,6 +27,12 @@ SEP: str = config["MESSAGES"]["Separator"]
 DIR_PORT: int = int(config["DIRECTORY"]["Port"])
 NB_CONN: int = int(config["DIRECTORY"]["SimultaneousConnections"])
 BUFFER_SIZE: int = int(config["DIRECTORY"]["BufferSize"])
+
+# Parse command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("-n","--number-of-nodes", action="store_true", help="Specify the number of active nodes")
+args = parser.parse_args()
+
 
 NUM_ROUTERS: int = int(input("Number of routers before running: "))
 DIR_IP: str = socket.gethostbyname(socket.gethostname())

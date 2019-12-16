@@ -42,11 +42,11 @@ if args.generate_keys:
     print("Generating RSA key pair.")
     pub_key, priv_key = gen_rsa_key()
 
-    with open(priv_key_file, 'w') as f:
+    with open(priv_key_file, 'wb') as f:
         chmod(priv_key_file, 0o600)
         f.write(priv_key)
 
-    with open(pub_key_file, 'w') as f:
+    with open(pub_key_file, 'wb') as f:
         chmod(pub_key_file, 0o600)
         f.write(pub_key)
 
@@ -54,9 +54,9 @@ elif path.exists(pub_key_file) and path.exists(priv_key_file):
     print("Importing RSA key pair.")
 
     try:
-        with open(pub_key_file,'r') as f:
+        with open(pub_key_file,'rb') as f:
             pub_key = f.read()
-        with open(priv_key_file,'r') as f:
+        with open(priv_key_file,'rb') as f:
             priv_key = f.read()
     except:
         print("Importing keys failed")
