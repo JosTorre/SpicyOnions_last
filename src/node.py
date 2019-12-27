@@ -77,7 +77,7 @@ print("Sending request to directory server.")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send(bytes(ONION_ROUTER + SEP + pub_key,"utf-8"))
+s.send(bytes(ONION_ROUTER + SEP,"utf-8") + pub_key)
 s.close()
 
 # Listen in order to get data from directory
