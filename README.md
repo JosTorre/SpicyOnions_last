@@ -1,17 +1,24 @@
 # SweetOnions - Making Onion Routing Great Again
 
-The purpose of SweetOnions is to emulate a smaller-scale version of onion routing using Python 3. 
+The purpose of SweetOnions is to emulate a smaller-scale version of onion routing using Python3. 
 
 There will be a client, server, directory, and three onion routing nodes through which the client can send and receive encrypted messages.
 Each message uses asymmetric encryption - the message itself is encrypted with 192-bit AES and the AES key is subsequently encrypted with 2048-RSA to ensure the sender is anonymized. 
 
 ## Installation
 
-You need Python**3** or higher.
+You absolutely need Python**3** or higher.
+You may want to have docker too in order to test the onion routing with one machine.
+
+* [Python3](https://www.python.org/downloads/)
+* [Docker](https://docs.docker.com/install/)
 
 ## Usage
 
-This tool requires a minimum of five machines (2 onion routing nodes) and six machines (3 onion routing nodes) to operate in order to simulate a TOR/onion routing network. The machines should be running as follows:
+If you have docker installed on your machine just `./launch.sh` and everything should work out of the box.
+
+Otherwise this tool requires a minimum of five machines (2 onion routing nodes) and six machines (3 onion routing nodes) to operate in order to simulate a TOR/onion routing network.
+The machines should be running as follows:
 
 __Machine 1__: ./client.py (This will request the user to enter the directory node's IP address as well as the message the user would like to send)
 
@@ -25,7 +32,7 @@ __Machine 5__: ./node.py --generate-keys (Each node will request the directory n
 
 __Machine 6__: ./server.py
 
-## Demo
+## Youtube Demo
 
 The following is a video demo of SweetOnions running across six machines: https://www.youtube.com/playlist?list=PLPNnD5CzODl0AT8zfREUCfGqaUXMoN9Dm
 
