@@ -3,21 +3,23 @@
 
 '''
 server.py
+Sends back the hash of the received message
+
 Should act like a normal server
 Should not know it is being accessed through onion routing
-Should send back the hash of the received message
 '''
 import socket
 import configparser
 from hashlib import sha224
 
-# Read configuration
-CONFIG_FILE = "sweet_onions.cfg"
+CONFIG_FILE: str = "sweet_onions.cfg"
+IP: str = socket.gethostbyname(socket.gethostname())
 
+# Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-IP: str = socket.gethostbyname(socket.gethostname())
+# Set configuration variables
 PORT: int = int(config["DEFAULT"]["Port"])
 BUFFER_SIZE: int = int(config["SERVER"]["BufferSize"])
 

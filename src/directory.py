@@ -13,9 +13,9 @@ import configparser
 from time import sleep
 from aes_rsa import *
 
-# Read configuration
 CONFIG_FILE = "sweet_onions.cfg"
 
+# Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
@@ -34,8 +34,9 @@ parser.add_argument("-n","--number-of-nodes", action="store_true", help="Specify
 args = parser.parse_args()
 
 
-NUM_ROUTERS: int = int(input("Number of routers before running: "))
 DIR_IP: str = socket.gethostbyname(socket.gethostname())
+print("Directory IP : {}".format(DIR_IP))
+NUM_ROUTERS: int = int(input("Number of routers before running: "))
 router_count: int = 0
 pub_keys = {}
 

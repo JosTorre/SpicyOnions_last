@@ -3,6 +3,7 @@
 
 '''
 node.py
+
 Tasks:
 Send info to directory node
 Decrypt layer of encryption
@@ -16,21 +17,25 @@ import configparser
 from os import chmod, path
 from aes_rsa import *
 
-# Read configuration
-CONFIG_FILE = "sweet_onions.cfg"
+CONFIG_FILE: str = "sweet_onions.cfg"
+IP: str = socket.gethostbyname(socket.gethostname())
 
+# Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-DIR_PORT = int(config['DIRECTORY']['Port'])
+# Set configuration variables
+DIR_PORT: int = int(config['DIRECTORY']['Port'])
 ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
 SEP: str = config["MESSAGES"]["Separator"]
+# The keypair filenames to search for/to write to
 priv_key_file: str = config['NODE']['PrivateKeyFilename']
 pub_key_file: str = config['NODE']['PublicKeyFilename']
+# The port on which we will listen
 PORT: int = int(config['DEFAULT']['Port'])
 BUFFER_SIZE: str = int(config['DEFAULT']['BufferSize'])
 
-IP = socket.gethostbyname(socket.gethostname())
+# Known nodes
 node_list = {}
 
 # Parse command line arguments
@@ -38,6 +43,7 @@ parser = argparse.ArgumentParser(description="The program will detect and use al
 parser.add_argument("-g","--generate-keys", action="store_true", help="Generate RSA keypair of node")
 args = parser.parse_args()
 
+# Check if key generation is needed
 if args.generate_keys:
     print("Generating RSA key pair.")
     pub_key, priv_key = gen_rsa_key()
