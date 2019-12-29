@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-DOCKER_OPTS="-it --rm --network host"
+NETWORK_NAME="sweet_onions"
+DOCKER_OPTS="-it --rm --network $NETWORK_NAME"
 
 # $1 : The info to print
 info() {
@@ -24,5 +25,12 @@ build_container Directory
 build_container Node
 build_container Server
 
-info "STARTING DIRECTORY"
+nb_onion_networks=$(docker network ls |grep -c 'sweet_onions')
+if [ $nb_onion_networks -lt 1 ]
+then
+	info "CREATING DOCKER $NETWORK_NAME NETWORK"
+	docker network create $NETWORK_NAME
+fi
+
+info "STARTING DIRECTORY" # In $NETWORK_NAME
 docker run $DOCKER_OPTS sweet_onions/directory

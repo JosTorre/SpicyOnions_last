@@ -20,6 +20,7 @@ config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
 NUM_NODES: int = config["DIRECTORY"]["NumberNode"]
+# Define all standard messages/communications transmitted with the nodes
 NOT_READY_MSG: bytes = bytes(config["MESSAGES"]["NotReady"],"utf-8")
 CLIENT_MSG: str = config["MESSAGES"]["ClientRequest"]
 ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
