@@ -87,18 +87,14 @@ s.bind((IP, DIR_PORT))
 s.listen(1)
 
 conn, addr = s.accept()
-addr = addr[0]
 data = conn.recv(BUFFER_SIZE).decode().split(SEP)
-print(data)
-
 number_of_nodes: int = int(data[0])
 data = data[1:]
 
-print('Connection address: {}'.format(addr))
-print("Return data from directory server: ")
+print("Data received from directory :")
 for x in range(number_of_nodes):
     node_list[data[2 * x]] = data[2 * x + 1]
-    print(data[2 * x] + ":" + data[2 * x + 1])
+    print("Public key of " + data[2 * x])
 
 conn.close()
 s.close()
