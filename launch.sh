@@ -48,4 +48,4 @@ tmux send-keys -t 4 "docker run $DOCKER_OPTS sweet_onions/directory" Enter
 tmux send-keys -t 5 "docker run $DOCKER_OPTS sweet_onions/node" Enter
 
 tmux select-layout tiled # Even out all tile
-tmux select-pane -t 0 # Go back to first panel
+tmux select-pane -t 4 # Go back to first panel

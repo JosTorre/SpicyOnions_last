@@ -68,8 +68,8 @@ if not dir_data or NOT_READY_MSG in dir_data:
 
 # Get the destination server and message
 dest_ip: str = input("Destination Address: ")
-msg: bytes = bytes(input("Message: "),"utf-8")
-msg_hash: str = sha224(msg).hexdigest()
+msg: str = str(input("Message: "))
+msg_hash: str = sha224(bytes(msg,"utf-8")).hexdigest()
 
 # Parse response from the directory
 dir_arr = dir_data.split(SEP)

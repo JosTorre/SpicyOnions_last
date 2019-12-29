@@ -37,7 +37,8 @@ args = parser.parse_args()
 
 DIR_IP: str = socket.gethostbyname(socket.gethostname())
 print("Directory IP : {}".format(DIR_IP))
-NUM_ROUTERS: int = int(input("Number of routers before running: "))
+#NUM_ROUTERS: int = int(input("Number of routers before running: "))
+NUM_ROUTERS: int = NUM_NODES
 router_count: int = 0
 pub_keys = {}
 
@@ -68,11 +69,6 @@ while router_count < NUM_ROUTERS:
 
     client_socket.close()
 
-# Print all registered nodes
-print("Dictionary of nodes:")
-for addr in pub_keys:
-    print(addr + " : " + pub_keys[addr])
-
 # Close directory server
 directory_server.close()
 sleep(1)
@@ -81,7 +77,6 @@ sleep(1)
 directory_content = bytes(str(NUM_ROUTERS),"utf-8")
 for key in pub_keys:
     directory_content += bytes(SEP + str(key) + SEP + str(pub_keys[key]), "utf-8")
-print(directory_content)
 
 # Send all public keys to nodes
 for addr in pub_keys:
