@@ -17,6 +17,8 @@ import configparser
 from os import chmod, path
 from aes_rsa import *
 
+# Init
+# ----------------------------------------------------------------
 CONFIG_FILE: str = "sweet_onions.cfg"
 IP: str = socket.gethostbyname(socket.gethostname())
 
@@ -42,6 +44,9 @@ node_list = {}
 parser = argparse.ArgumentParser(description="The program will detect and use already existing key if no option is specified")
 parser.add_argument("-g","--generate-keys", action="store_true", help="Generate RSA keypair of node")
 args = parser.parse_args()
+
+# Get node's keypair
+# ----------------------------------------------------------------
 
 # Check if key generation is needed
 if args.generate_keys:
@@ -72,6 +77,7 @@ else:
     exit()
 
 # Send public key to directory
+# ----------------------------------------------------------------
 DIR_IP: str = input("Directory server to connect to: ")
 print("Sending request to directory server.")
 
@@ -81,6 +87,7 @@ s.send(bytes(ONION_ROUTER + SEP,"utf-8") + pub_key)
 s.close()
 
 # Listen in order to get data from directory
+# ----------------------------------------------------------------
 print("Listen for public keys on {}:{}".format(IP,DIR_PORT))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((IP, DIR_PORT))
@@ -100,7 +107,7 @@ conn.close()
 s.close()
 
 # Run Node
-# -----------------------------
+# ----------------------------------------------------------------
 entrance_flag = ""
 entrance_addr = ""
 
