@@ -14,15 +14,19 @@ Client should do the following things in order:
 7. Compare returned hash to hash of sent packet
 8. Repeat from step 3
 '''
+
 import socket
 import configparser
 from random import randint, shuffle
 from hashlib import sha224
 from aes_rsa import *
 
-# Read configuration
+# Init
+# ----------------------------------------------------------------
+IP: str = socket.gethostbyname(socket.gethostname())
 CONFIG_FILE = "sweet_onions.cfg"
 
+# Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
@@ -33,7 +37,6 @@ SEP: str = config["MESSAGES"]["Separator"]
 CLIENT_REQ: str = config["MESSAGES"]["ClientRequest"]
 NOT_READY_MSG: str = config["MESSAGES"]["NotReady"]
 
-IP: str = socket.gethostbyname(socket.gethostname())
 DIR_NODE: str = input("Directory server to connect to: ")
 
 # front of nodes is server ip, back of nodes is entrance node
@@ -99,7 +102,7 @@ while i < NUM_NODES:
 
 
 print("UP TO WRAPPING LAYERS")
-message = wrap_layers(msg, node_addr, pubkeys)
+message = wrap_layers(msg, node_addr, bytes(pubkeys,"utf-8"))
 print(message)
 
 # Send Message

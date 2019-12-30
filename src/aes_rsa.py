@@ -7,8 +7,8 @@ from base64 import b64decode, b64encode
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
 
-BLOCK_SIZE = 16
-PADDING = '{'
+BLOCK_SIZE: int = 16
+PADDING: str = '{'
 
 def pad(msg: str) -> str:
     """Pad message in order to have 16 bytes blocks
@@ -16,7 +16,10 @@ def pad(msg: str) -> str:
     :return: The padded message
     :rtype: bytes
     """
-    return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
+    if isinstance(msg,str):
+        return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
+    else:
+        raise TypeError("The variable msg must be a string")
 
 def gen_aes_key() -> bytes:
     """Create new key usable by AES
@@ -54,6 +57,12 @@ def aes_encrypt(key: bytes, msg: str) -> bytes:
     :return: The encrypted message in base 64
     :rtype: bytes
     """
+
+    if not isinstance(msg,str):
+        raise TypeError("The variable msg must be a string")
+    if not isinstance(key,bytes):
+        raise TypeError("The variable key must be bytes")
+
     padded_msg: str = pad(msg)
 
     cipher = AES.new(b64decode(key))
@@ -71,6 +80,11 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     :return: The cleartext
     :rtype: bytes
     """
+
+    if not isinstance(msg,bytes):
+        raise TypeError("The variable msg must be bytes")
+    if not isinstance(key,bytes):
+        raise TypeError("The variable key must be bytes")
 
     uncipher = AES.new(b64decode(key))
     # Get the string representation
@@ -91,6 +105,11 @@ def rsa_encrypt(pub_key: bytes, msg: str) -> str:
     :rtype: bytes
     """
 
+    if not isinstance(msg,str):
+        raise TypeError("The variable msg must be a string")
+    if not isinstance(key,bytes):
+        raise TypeError("The variable key must be bytes")
+
     pub_key_obj =  RSA.importKey(pub_key)
     encrypted: bytes = pub_key_obj.encrypt(bytes(msg,"utf-8"), "")[0]
     return encrypted
@@ -105,6 +124,11 @@ def rsa_decrypt(priv_key: bytes, msg: bytes) -> bytes:
     :return: The cleartext
     :rtype: bytes
     """
+
+    if not isinstance(msg,bytes):
+        raise TypeError("The variable msg must be bytes")
+    if not isinstance(key,bytes):
+        raise TypeError("The variable key must be bytes")
 
     priv_key_obj = RSA.importKey(priv_key)
     decrypted: bytes = priv_key_obj.decrypt(msg)
@@ -123,6 +147,14 @@ def aes_rsa_encrypt(aes_key: bytes, rsa_key: bytes, msg: str):
     :return: The encrypted AES key, the encrypted message
     :rtype: bytes, bytes
     """
+
+    if not isinstance(msg,str):
+        raise TypeError("The variable msg must be a string")
+    if not isinstance(rsa_key,bytes):
+        raise TypeError("The variable rsa_key must be bytes")
+    if not isinstance(aes_key,bytes):
+        raise TypeError("The variable aes_key must be bytes")
+
     encrypted_msg: bytes = aes_encrypt(aes_key, msg)
     encrypted_key: bytes = rsa_encrypt(rsa_key, aes_key)
     return encryptedKey, encryptedMsg
@@ -140,6 +172,13 @@ def aes_rsa_decrypt(aes_key: bytes, rsa_key: bytes, msg: bytes) -> bytes:
     :rtype: str
     """
 
+    if not isinstance(msg,bytes):
+        raise TypeError("The variable msg must be bytes")
+    if not isinstance(rsa_key,bytes):
+        raise TypeError("The variable rsa_key must be bytes")
+    if not isinstance(aes_key,bytes):
+        raise TypeError("The variable aes_key must be bytes")
+
     decrypted_key: bytes = rsa_decrypt(rsa_key, aes_key)
     decrypted_msg = aes_decrypt(decrypted_key, msg)
     return decrypted_msg
@@ -152,4 +191,10 @@ def easy_encrypt(rsa_key: bytes, msg: str):
     :return: The encrypted AES key, the encrypted message
     :rtype: bytes, bytes
     """
+
+    if not isinstance(msg,str):
+        raise TypeError("The variable msg must be a string")
+    if not isinstance(rsa_key,bytes):
+        raise TypeError("The variable key must be bytes")
+
     return aes_rsa_encrypt(gen_aes_key(), rsa_key, msg)
