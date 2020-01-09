@@ -49,8 +49,10 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
         if x == len(nodes) - 2:
             message = message + SEP + 'entrance'
 
+        print(message)
+        print(public_keys[x])
         encrypted_key, encrypted_msg = easy_encrypt(public_keys[x], message)
-        message = encrypted_msg + SEP + encrypted_key
+        message = encrypted_msg + bytes(SEP,"utf-8") + encrypted_key
 
     return message
 
@@ -85,7 +87,7 @@ in_addr = []
 print("RECEIVED")
 for x in range(int(len(dir_arr)/2)):
     in_addr.append(dir_arr[2*x])
-    in_keys.append(dir_arr[2*x + 1])
+    in_keys.append(bytes(dir_arr[2*x + 1],"utf-8"))
 
 
 # Generate a random route
@@ -102,7 +104,7 @@ while i < NUM_NODES:
 
 
 print("UP TO WRAPPING LAYERS")
-message = wrap_layers(msg, node_addr, bytes(pubkeys,"utf-8"))
+message = wrap_layers(msg, node_addr, pubkeys)
 print(message)
 
 # Send Message
