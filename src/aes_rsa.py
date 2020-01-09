@@ -107,8 +107,8 @@ def rsa_encrypt(pub_key: bytes, msg: str) -> str:
 
     if not isinstance(msg,str):
         raise TypeError("The variable msg must be a string")
-    if not isinstance(key,bytes):
-        raise TypeError("The variable key must be bytes")
+    if not isinstance(pub_key,bytes):
+        raise TypeError("The public key must be bytes")
 
     pub_key_obj =  RSA.importKey(pub_key)
     encrypted: bytes = pub_key_obj.encrypt(bytes(msg,"utf-8"), "")[0]
@@ -156,8 +156,8 @@ def aes_rsa_encrypt(aes_key: bytes, rsa_key: bytes, msg: str):
         raise TypeError("The variable aes_key must be bytes")
 
     encrypted_msg: bytes = aes_encrypt(aes_key, msg)
-    encrypted_key: bytes = rsa_encrypt(rsa_key, aes_key)
-    return encryptedKey, encryptedMsg
+    encrypted_key: bytes = rsa_encrypt(rsa_key, aes_key.decode())
+    return encrypted_key, encrypted_msg
 
 def aes_rsa_decrypt(aes_key: bytes, rsa_key: bytes, msg: bytes) -> bytes:
     """Decrypts using both AES and RSA
