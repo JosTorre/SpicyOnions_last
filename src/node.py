@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding : utf-8
 
-'''
+"""
 node.py
 
 Tasks:
@@ -9,40 +9,44 @@ Send info to directory node
 Decrypt layer of encryption
 Relay data onward
 On data coming back, decrypt and send to previous node
-'''
+"""
 
 import socket
 import argparse
 import configparser
 from os import chmod, path
-from aes_rsa import *
+from typing import List, Dict
+from src.aes_rsa import *
 
 # Init
 # ----------------------------------------------------------------
+
 CONFIG_FILE: str = "sweet_onions.cfg"
 IP: str = socket.gethostbyname(socket.gethostname())
 
-# Read configuration
+# Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
 
-# Set configuration variables
+# Set configuration variables
 DIR_PORT: int = int(config['DIRECTORY']['Port'])
 ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
 SEP: str = config["MESSAGES"]["Separator"]
+ENTRANCE: str = config["MESSAGES"]["Entrance"]
 # The keypair filenames to search for/to write to
 priv_key_file: str = config['NODE']['PrivateKeyFilename']
 pub_key_file: str = config['NODE']['PublicKeyFilename']
 # The port on which we will listen
 PORT: int = int(config['DEFAULT']['Port'])
-BUFFER_SIZE: str = int(config['DEFAULT']['BufferSize'])
+BUFFER_SIZE: int = int(config['DEFAULT']['BufferSize'])
 
 # Known nodes
 node_list = {}
 
 # Parse command line arguments
-parser = argparse.ArgumentParser(description="The program will detect and use already existing key if no option is specified")
-parser.add_argument("-g","--generate-keys", action="store_true", help="Generate RSA keypair of node")
+parser = argparse.ArgumentParser(
+    description="The program will detect and use already existing key if no option is specified")
+parser.add_argument("-g", "--generate-keys", action="store_true", help="Generate RSA keypair of node")
 args = parser.parse_args()
 
 # Get node's keypair
@@ -65,9 +69,9 @@ elif path.exists(pub_key_file) and path.exists(priv_key_file):
     print("Importing RSA key pair.")
 
     try:
-        with open(pub_key_file,'rb') as f:
+        with open(pub_key_file, 'rb') as f:
             pub_key = f.read()
-        with open(priv_key_file,'rb') as f:
+        with open(priv_key_file, 'rb') as f:
             priv_key = f.read()
     except:
         print("Importing keys failed")
@@ -76,27 +80,27 @@ else:
     parser.print_help()
     exit()
 
-# Send public key to directory
+# Send public key to directory
 # ----------------------------------------------------------------
 DIR_IP: str = input("Directory server to connect to: ")
 print("Sending request to directory server.")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_IP, DIR_PORT))
-s.send(bytes(ONION_ROUTER + SEP,"utf-8") + pub_key)
+s.send(bytes(ONION_ROUTER + SEP, "utf-8") + pub_key)
 s.close()
 
 # Listen in order to get data from directory
 # ----------------------------------------------------------------
-print("Listen for public keys on {}:{}".format(IP,DIR_PORT))
+print("Listen for public keys on {}:{}".format(IP, DIR_PORT))
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((IP, DIR_PORT))
 s.listen(1)
 
 conn, addr = s.accept()
-data = conn.recv(BUFFER_SIZE).decode().split(SEP)
+data: List[bytes] = conn.recv(BUFFER_SIZE).split(SEP)
 number_of_nodes: int = int(data[0])
-data = data[1:]
+data: List[bytes] = data[1:]
 
 print("Data received from directory :")
 for x in range(number_of_nodes):
@@ -126,8 +130,8 @@ while 1:
     if not data: break
     print("[Node Running] Received data: {}".format(data))
 
-    encrypted_data = data.split(SEP)
-    decrypted_message = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split(SEP)
+    encrypted_data: List[bytes] = data.split(SEP)
+    decrypted_message: List[bytes] = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split(SEP)
     next_node = decrypted_message[0]
 
     # Entrance Node Case
@@ -149,7 +153,6 @@ while 1:
         s.send(decrypted_message[1] + SEP + decrypted_message[2])
         s.close()
         print("This is not an exit node. Nothing special here.")
-        
     # Entrance Node
     elif entrance_flag == ENTRANCE and not next_node:
         conn.close()
@@ -162,19 +165,20 @@ while 1:
         print("This is the entrance node returning to the client")
         entrance_flag = ""
         entrance_addr = ""
-        
     # Exit Node - Send Data Back
     elif next_node not in node_list:
+        # Close the current connection
         conn.close()
         s.close()
         print("This is the exit node.")
+
+        # Return the message
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((next_node, PORT))
         s.send(decrypted_message[1])
-
         server_response = s.recv(BUFFER_SIZE)
         s.close()
-        
+
         return_route = decrypted_message[3:]
         return_route.reverse()
         return_message = server_response
@@ -184,16 +188,15 @@ while 1:
         for x in range(len(return_route)):
             return_message = SEP + return_message
             if x != 0:
-                return_message = return_route[x-1] + return_message
+                return_message = return_route[x - 1] + return_message
             encrypted_key, encrypted_msg = easy_encrypt(node_list[return_route[x]], return_message)
             return_message = encrypted_msg + SEP + encrypted_key
-            
-        
+
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((decrypted_message[3], PORT))
         s.send(return_message)
         s.close()
-        
+
     # Continue Listening
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((IP, PORT))
