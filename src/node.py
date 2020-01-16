@@ -16,7 +16,7 @@ import argparse
 import configparser
 from os import chmod, path
 from typing import List, Dict
-from src.aes_rsa import *
+from aes_rsa import *
 
 # Init
 # ----------------------------------------------------------------
