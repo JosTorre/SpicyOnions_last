@@ -49,7 +49,7 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
     for x in range(len(nodes) - 1):
         message = nodes[x] + SEP + message
         if x == len(nodes) - 2:
-            message = message + SEP + 'entrance'
+            message = message + SEP + "entrance"
 
         print(message)
         print(public_keys[x])
@@ -59,7 +59,8 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
     return message
 
 
-# Connect to directory
+# Connect to directory to get nodes's public keys
+# ----------------------------------------------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((DIR_NODE, DIR_PORT))
 
@@ -74,6 +75,7 @@ if not dir_data or NOT_READY_MSG in dir_data:
     exit()
 
 # Get the destination server and message
+# ----------------------------------------------------------------
 dest_ip: str = input("Destination Address: ")
 msg: str = str(input("Message: "))
 msg_hash: str = sha224(bytes(msg,"utf-8")).hexdigest()
@@ -93,12 +95,14 @@ for x in range(int(len(dir_arr)/2)):
 
 
 # Generate a random route
+# ----------------------------------------------------------------
 NUM_NODES = randint(2, NUM_ROUTERS)
 i = 0
 y = list(range(NUM_ROUTERS))
 shuffle(y)
 pubkeys = []
 node_addr = [dest_ip]
+
 while i < NUM_NODES:
     pubkeys.append(in_keys[y[i]])
     node_addr.append(in_addr[y[i]])
@@ -110,12 +114,14 @@ message = wrap_layers(msg, node_addr, pubkeys)
 print(message)
 
 # Send Message
+# ----------------------------------------------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((node_addr[i], PORT))
 s.send(message)
 s.close()
 
 # Receive Message
+# ----------------------------------------------------------------
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((IP, PORT))
 s.listen(1)
