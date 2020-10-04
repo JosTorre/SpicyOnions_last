@@ -41,6 +41,8 @@ DIR_NODE: str = input("Directory server to connect to: ")
 
 # front of nodes is server ip, back of nodes is entrance node
 def wrap_layers(message: str, nodes, public_keys) -> str:
+    assert isinstance(message, str), "The variable message must be a string"
+
     for x in nodes[1:]:
         message += SEP + x
 
