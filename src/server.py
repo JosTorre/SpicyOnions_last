@@ -32,17 +32,19 @@ print("Connection opened on {}:{}".format(IP, PORT))
 
 # Return sha224 of first data for each connections
 try:
+    #while True:
+    conn, addr = s.accept()
+    print("Connection from {}".format(addr[0]))
     while True:
-        conn, addr = s.accept()
-        print("Connection from {}".format(addr[0]))
-
         data = conn.recv(BUFFER_SIZE)
-        print("Received : {}".format(data.decode().strip()))
+        print(type(data))
+        print(data)
+        print("Received from Client : " + data.decode(encoding = 'utf-8'))
 
         # Send SHA 224 of received message
-        response: bytes = bytes(sha224(data).hexdigest() + '\n', "utf-8")
-        conn.send(response)
+        #response: bytes = bytes(sha224(data).hexdigest() + '\n', "utf-8")
+        conn.send(data)
 
-        conn.close()
+    conn.close()
 except KeyboardInterrupt:
     print("Server closed")

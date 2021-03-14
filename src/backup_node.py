@@ -17,14 +17,6 @@ import configparser
 from os import chmod, path
 from typing import List, Dict
 from aes_rsa import *
-from _thread import *
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.asymmetric import x25519
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
 
 # Init
 # ----------------------------------------------------------------
@@ -122,189 +114,42 @@ s.close()
 #Circuit Creation
 # ----------------------------------------------------------------
 
-rs = socket.socket()
-ThreadCount = 0
-
-try:
-    rs.bind((IP, PORT))
-except socket.error as e:
-    print(str(e))
-
-# Key Creation
-# ----------------------------------------------------------------
-
-private_onion_key = X25519PrivateKey.generate()
-public_onion_key = private_onion_key.public_key()
-public_bytes = public_onion_key.public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw
-)
-
-print('Ready for Circuit...')
-rs.listen(2)
-
-backend = default_backend()
-
-def threaded_client(client):
-    endnode = False
-    flag =0
-    #conn.send(str.encode('CREATED'))
-
-    while True:
-
-        data = client.recv(2048) # We get data from Client
-        arr = pickle.loads(data)
-        content = arr[4]
-        print(arr)
-        print(len(content))
-        if (len(content) == 32) :
-            peer_public = x25519.X25519PublicKey.from_public_bytes(content)
-            shared_onion_key = private_onion_key.exchange(peer_public)
-            derived_key = HKDF(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=None,
-                info=b'handshake data',
-                backend=backend
-            ).derive(shared_onion_key)
-        if arr[3] == 'CREATE' or arr[3] == 'CREATE2' : 
-            if arr[0] == 1 :
-                print("Entry Node")
-                print(arr[3])
-                print("Entry Node Shared Secret:")
-                print(derived_key)
-            elif arr[0] != 1 and arr[0] != arr[1]  :
-                print("Middle Node")
-                print(arr[3])
-                print("Middle Node Shared Secret:")
-                print(derived_key)
-            elif arr[0] == arr[1] :
-                endnode = True
-                print("Exit Node")
-                print(arr[3])
-                print("Exit Node Shared Secret:")
-                print(derived_key)
-
-            if arr[3] == 'CREATE' :
-              arr[3] = "CREATED"
-            elif arr[3] == 'CREATE2' :
-              arr[3] = "CREATED2"
-
-            peer_public = x25519.X25519PublicKey.from_public_bytes(arr[4])
-            arr[4] = public_bytes
-            array = pickle.dumps(arr)
-            client.send(array)
+# Start Listening
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((IP, PORT))
+s.listen(3)
 
 
-        elif arr[3] == 'EXTEND' or arr[3] == 'EXTEND2' :
-           print(arr[3])
-           flag = flag + 1
+conn, addr = s.accept()
+addr = addr[0]
+data = conn.recv(BUFFER_SIZE)
+#circuit_data: List[bytes] = data.split(sep_as_bytes)
 
-           if flag == 1 : #Needs to change from extend to create
+circuit_route = pickle.loads(data) 
+#circuit_count = circuit_data[1]
+print(circuit_route)
+circuit_count = 3
+if IP ==  circuit_route[3] :
+        print("Circuit - Entry")
+       # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        circuit_count = circuit_count - 1 
+        s.close() 
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((circuit_route[circuit_count], PORT))
+        print(type(data))
+        print(type(circuit_count))
+        data = data + sep_as_bytes + bytes(circuit_count, 'utf-8')
+        s.send(data)
 
-              ms = socket.socket() #Initialize Socket for next Node
-              try:
-                ms.connect((arr[2], PORT)) #Connect with next Node
-              except error as e:
-                print(str(e))
+elif circuit_count < (len(circuit_route)-1) :
+        print("Middle Node")
+       # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((circuit_route[circuit_count], PORT))
+        circuit_count = circuit_count + 1
 
-              if arr[3] == 'EXTEND' :
-                arr[3] = 'CREATE' 
-                print('EXTEND -> CREATE')
-              elif arr[3] == 'EXTEND2' :
-                arr[3] = 'CREATE2'
-                print('EXTEND2 -> CREATE2')
-
-              nodes = pickle.dumps(arr)
-              ms.send(nodes)
-              resp = ms.recv(1024)
-              arr_resp = pickle.loads(resp)
-
-              if arr_resp[3] == 'CREATED':
-                arr_resp[3] = 'EXTENDED'
-              elif arr_resp[3] == 'CREATED2' :
-                arr_resp[3] = 'EXTENDED2'
-
-              resp = pickle.dumps(arr_resp)
-              client.send(resp)
-
-           elif flag > 1 :
-              nodes = pickle.dumps(arr)
-              ms.send(nodes)
-              resp = ms.recv(1024)
-              client.send(resp)
-
-        elif arr[3] == 'RELAY' :
-            print("RELAY received")
-            if endnode :
-             ms = socket.socket() #Initialize Socket for Destination Server
-             try:
-               	ms.connect((arr[2], PORT)) #Connect with Destination Server
-             except error as e:
-               	print(str(e))
-             
-             print("Forwarding RELAY")   
-             message = arr[4]
-             decrypted = aes_decrypt(derived_key, message)
-             print(type(decrypted))
-             print(decrypted)
-             ms.send(decrypted)
-             resp = ms.recv(1024)
-             client.send(resp)
-             while True:
-                print("Forwarding to Server")
-                response = client.recv(1024)
-                arr = pickle.loads(response)
-                message = arr[4]
-                decrypted = aes_decrypt(derived_key, message)
-                print(type(decrypted))
-                print(decrypted)
-                ms.send(str.encode(decrypted))
-                ms_response = ms.recv(1024)
-                #arr = str.encode(ms_reponse) 
-                #print("Forwarding " + arr[4])
-                client.send(ms_response)
-             ms.close()
-             client.close()
-            else :
-             message = arr[4]
-             decrypted = aes_decrypt(derived_key, message)
-             print("Message: " + decrypted)
-             arr[4] = decrypted
-             nodes = pickle.dumps(arr)
-             ms.send(nodes)
-
-             while True:
-
-                print("Passing Relay")
-                response = ms.recv(1024)
-                client.send(response)
-                client_response = client.recv(1024)
-                arr = pickle.loads(client_response)
-                message = arr[4]
-                decrypted = aes_decrypt(derived_key,message)
-                print("Message: " + decrypted)
-                ms.send(decrypted)
-        
-             ms.close()
-             client.close()
-
-
-
-#reply = 'Server Says: ' + data.decode('utf-8')
-#if not data:
-#   break
-#   connection.sendall(str.encode(reply))
-#      connection.close()
-
-while True:
-    Client, address = rs.accept()
-    print('Connected to: ' + address[0] + ':' + str(address[1]))
-    start_new_thread(threaded_client, (Client, ))
-    #ThreadCount += 1
-    #print('Thread Number: ' + str(ThreadCount))
-
-rs.close()
+elif circuit_count == (len(circuit_route)-1) :
+        print("Exit Node")
+        s.send("CREATED")
 
 # Run Node
 # ----------------------------------------------------------------

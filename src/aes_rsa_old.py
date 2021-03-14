@@ -6,24 +6,18 @@ from os import urandom
 from base64 import b64decode, b64encode
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import AES
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.backends import default_backend
 
-backend = default_backend()
 BLOCK_SIZE: int = 16
-PADDING: str = '}'
+PADDING: str = '{'
 
-def pad(msg: bytes) -> str:
+def pad(msg: str) -> str:
     """Pad message in order to have 16 bytes blocks
 
     :return: The padded message
     :rtype: bytes
     """
     assert isinstance(msg,str), "The variable msg must be a string"
-    # (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
-    msg = msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING  
-    print(len(msg))
-    return msg
+    return msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
         
 
 def gen_aes_key() -> bytes:
@@ -52,7 +46,7 @@ def gen_rsa_key():
 
     return public_key, private_key
 
-def aes_encrypt(key: bytes, msg: str) -> str:
+def aes_encrypt(key: bytes, msg: str) -> bytes:
     """Encrypt msg in AES with key
 
     :param key: The AES key encoded in base 64
@@ -67,13 +61,11 @@ def aes_encrypt(key: bytes, msg: str) -> str:
     assert isinstance(key,bytes), "The variable key must be bytes"
 
     padded_msg: str = pad(msg)
-    keydigest = hashes.Hash(hashes.SHA256())
-    print('asdf')
-    keydigest.update(key)
-    cipher = AES.new(keydigest.finalize())
-    encrypted: str = cipher.encrypt(padded_msg)
 
-    return encrypted
+    cipher = AES.new(b64decode(key))
+    encrypted: bytes = cipher.encrypt(padded_msg)
+
+    return b64encode(encrypted)
 
 def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     """Decrypt msg using AES with key
@@ -88,14 +80,12 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
 
     assert isinstance(msg,bytes), "The variable msg must be bytes"
     assert isinstance(key,bytes), "The variable key must be bytes"
-    keydigest = hashes.Hash(hashes.SHA256(),backend=backend)
-    keydigest.update(key)
-    uncipher = AES.new(keydigest.finalize())
+
+    uncipher = AES.new(b64decode(key))
     # Get the string representation
-    decrypted: str = uncipher.decrypt(msg)
+    decrypted: str = uncipher.decrypt(b64decode(msg)).decode()
     # Remove the padding put before
-    padding = PADDING.encode()
-    decrypted = decrypted.rstrip(padding)
+    decrypted = decrypted.rstrip(PADDING)
 
     return decrypted
 
@@ -110,12 +100,11 @@ def rsa_encrypt(pub_key: bytes, msg: str) -> str:
     :rtype: bytes
     """
 
-    #assert isinstance(msg,str), "The variable msg must be a string"
+    assert isinstance(msg,str), "The variable msg must be a string"
     assert isinstance(pub_key,bytes), "The public key must be bytes"
-    #(msg.decode())
+
     pub_key_obj =  RSA.importKey(pub_key)
-    encrypted: str = pub_key_obj.encrypt(msg, "")[0]
-    #print(encrypted)
+    encrypted: bytes = pub_key_obj.encrypt(bytes(msg,"utf-8"), "")[0]
     return encrypted
 
 def rsa_decrypt(priv_key: bytes, msg: bytes) -> bytes:
@@ -130,7 +119,7 @@ def rsa_decrypt(priv_key: bytes, msg: bytes) -> bytes:
     """
 
     assert isinstance(msg,bytes), "The variable msg must be bytes"
-    assert isinstance(priv_key,bytes), "The variable key must be bytes"
+    assert isinstance(key,bytes), "The variable key must be bytes"
 
     priv_key_obj = RSA.importKey(priv_key)
     decrypted: bytes = priv_key_obj.decrypt(msg)
@@ -155,7 +144,7 @@ def aes_rsa_encrypt(aes_key: bytes, rsa_key: bytes, msg: str):
     assert isinstance(aes_key,bytes), "The variable aes_key must be bytes"
 
     encrypted_msg: bytes = aes_encrypt(aes_key, msg)
-    encrypted_key: bytes = rsa_encrypt(rsa_key, aes_key)
+    encrypted_key: bytes = rsa_encrypt(rsa_key, aes_key.decode())
     return encrypted_key, encrypted_msg
 
 def aes_rsa_decrypt(aes_key: bytes, rsa_key: bytes, msg: bytes) -> bytes:
@@ -179,7 +168,7 @@ def aes_rsa_decrypt(aes_key: bytes, rsa_key: bytes, msg: bytes) -> bytes:
     decrypted_msg = aes_decrypt(decrypted_key, msg)
     return decrypted_msg
 
-def easy_encrypt(rsa_key: bytes, msg: bytes):
+def easy_encrypt(rsa_key: bytes, msg: str):
     """Encrypts using both AES and RSA after generating the AES key itself
 
     :param rsa_key: The RSA public key
@@ -188,7 +177,7 @@ def easy_encrypt(rsa_key: bytes, msg: bytes):
     :rtype: bytes, bytes
     """
 
-    assert isinstance(msg,bytes), "The variable msg must be a string"
+    assert isinstance(msg,str), "The variable msg must be a string"
     assert isinstance(rsa_key,bytes), "The variable key must be bytes"
 
     return aes_rsa_encrypt(gen_aes_key(), rsa_key, msg)

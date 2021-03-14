@@ -24,7 +24,7 @@ from aes_rsa import *
 # Init
 # ----------------------------------------------------------------
 IP: str = socket.gethostbyname(socket.gethostname())
-CONFIG_FILE = "/home/spice/spiceonion/SweetOnions/src/sweet_onions.cfg"
+CONFIG_FILE = "sweet_onions.cfg"
 
 # Read configuration
 config = configparser.ConfigParser()
@@ -45,19 +45,17 @@ def wrap_layers(message: str, nodes, public_keys) -> str:
 
     for x in nodes[1:]:
         message += SEP + x
-    #message = bytes(message,'utf-8')
+
     for x in range(len(nodes) - 1):
         message = nodes[x] + SEP + message
         if x == len(nodes) - 2:
             message = message + SEP + "entrance"
-        
+
         print(message)
         print(public_keys[x])
         encrypted_key, encrypted_msg = easy_encrypt(public_keys[x], message)
-        print(type(encrypted_key))
-        print(type(encrypted_msg))
-        message = encrypted_msg + bytes(SEP,'utf-8') + encrypted_key
-        print(type(message))
+        message = encrypted_msg + bytes(SEP,"utf-8") + encrypted_key
+
     return message
 
 
