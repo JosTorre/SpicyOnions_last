@@ -1,0 +1,3 @@
+FROM sweet_onions/generic:latest
+
+ENTRYPOINT ./directory.py

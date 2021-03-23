@@ -1,0 +1,247 @@
+#!/usr/bin/env python3
+# coding : utf-8
+
+"""
+node.py
+
+Tasks:
+Send info to directory node
+Decrypt layer of encryption
+Relay data onward
+On data coming back, decrypt and send to previous node
+"""
+
+import socket, pickle
+import argparse
+import configparser
+from os import chmod, path
+from typing import List, Dict
+from aes_rsa import *
+
+# Init
+# ----------------------------------------------------------------
+
+CONFIG_FILE: str = "sweet_onions.cfg"
+IP: str = socket.gethostbyname(socket.gethostname())
+
+# Read configuration
+config = configparser.ConfigParser()
+config.read(CONFIG_FILE)
+
+# Set configuration variables
+DIR_PORT: int = int(config['DIRECTORY']['Port'])
+ONION_ROUTER: str = config["MESSAGES"]["OnionRouter"]
+SEP: str = config["MESSAGES"]["Separator"]
+ENTRANCE: str = config["MESSAGES"]["Entrance"]
+# The keypair filenames to search for/to write to
+priv_key_file: str = config['NODE']['PrivateKeyFilename']
+pub_key_file: str = config['NODE']['PublicKeyFilename']
+# The port on which we will listen
+PORT: int = int(config['DEFAULT']['Port'])
+BUFFER_SIZE: int = int(config['DEFAULT']['BufferSize'])
+
+# Known nodes
+node_list = {}
+
+# Parse command line arguments
+parser = argparse.ArgumentParser(
+    description="The program will detect and use already existing key if no option is specified")
+parser.add_argument("-g", "--generate-keys", action="store_true", help="Generate RSA keypair of node")
+args = parser.parse_args()
+
+# Get node's keypair
+# ----------------------------------------------------------------
+
+# Check if key generation is needed
+if args.generate_keys:
+    print("Generating RSA key pair.")
+    pub_key, priv_key = gen_rsa_key()
+
+    with open(priv_key_file, 'wb') as f:
+        chmod(priv_key_file, 0o600)
+        f.write(priv_key)
+
+    with open(pub_key_file, 'wb') as f:
+        chmod(pub_key_file, 0o600)
+        f.write(pub_key)
+
+elif path.exists(pub_key_file) and path.exists(priv_key_file):
+    print("Importing RSA key pair.")
+
+    try:
+        with open(pub_key_file, 'rb') as f:
+            pub_key = f.read()
+        with open(priv_key_file, 'rb') as f:
+            priv_key = f.read()
+    except:
+        print("Importing keys failed")
+        exit()
+else:
+    parser.print_help()
+    exit()
+
+# Send public key to directory
+# ----------------------------------------------------------------
+DIR_IP: str = input("Directory server to connect to: ")
+print("Sending request to directory server.")
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((DIR_IP, DIR_PORT))
+s.send(bytes(ONION_ROUTER + SEP, "utf-8") + pub_key)
+s.close()
+
+# Listen in order to get data from directory
+# ----------------------------------------------------------------
+print("Listen for public keys on {}:{}".format(IP, DIR_PORT))
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((IP, DIR_PORT))
+s.listen(1)
+
+conn, addr = s.accept()
+sep_as_bytes: bytes = SEP.encode("UTF-8")
+data: List[bytes] = conn.recv(BUFFER_SIZE).split(sep_as_bytes)
+number_of_nodes: int = int(data[0])
+data: List[bytes] = data[1:]
+
+print("Data received from directory :")
+for x in range(number_of_nodes):
+    node_list[data[2 * x]] = data[2 * x + 1]
+    print("Public key of " + data[2 * x].decode())
+
+conn.close()
+s.close()
+
+#Circuit Creation
+# ----------------------------------------------------------------
+
+# Start Listening
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((IP, PORT))
+s.listen(3)
+
+
+conn, addr = s.accept()
+addr = addr[0]
+data = conn.recv(BUFFER_SIZE)
+#circuit_data: List[bytes] = data.split(sep_as_bytes)
+
+circuit_route = pickle.loads(data) 
+#circuit_count = circuit_data[1]
+print(circuit_route)
+circuit_count = 3
+if IP ==  circuit_route[3] :
+        print("Circuit - Entry")
+       # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        circuit_count = circuit_count - 1 
+        s.close() 
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((circuit_route[circuit_count], PORT))
+        print(type(data))
+        print(type(circuit_count))
+        data = data + sep_as_bytes + bytes(circuit_count, 'utf-8')
+        s.send(data)
+
+elif circuit_count < (len(circuit_route)-1) :
+        print("Middle Node")
+       # s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((circuit_route[circuit_count], PORT))
+        circuit_count = circuit_count + 1
+
+elif circuit_count == (len(circuit_route)-1) :
+        print("Exit Node")
+        s.send("CREATED")
+
+# Run Node
+# ----------------------------------------------------------------
+entrance_flag = ""
+entrance_addr = ""
+
+# Start Listening
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((IP, PORT))
+s.listen(1)
+
+while 1:
+    conn, addr = s.accept()
+    addr = addr[0]
+    data = conn.recv(BUFFER_SIZE)
+
+    print("[Node Running] Connection address: {}".format(addr))
+
+    if not data: break
+    print("[Node Running] Received data: {}".format(data))
+    encrypted_data: List[bytes] = data.split(sep_as_bytes)
+    decrypted_message: List[bytes] = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split(sep_as_bytes)
+    next_node = decrypted_message[0]
+
+    # Entrance Node Case
+    print(len(decrypted_message))
+    print(decrypted_message)
+    if len(decrypted_message) == 4:
+        entrance_flag = decrypted_message[3]
+        entrance_addr = addr
+        if decrypted_message[3] == b'entrance':
+            print("This is the entrance node receiving initial packet.")
+        conn.close()
+        s.close()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Send to Next Node
+    if next_node in node_list:
+        conn.close()
+        s.close()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((next_node, PORT))
+        s.send(decrypted_message[1] + sep_as_bytes + decrypted_message[2])
+        s.close()
+        print("This is not an exit node. Nothing special here.")
+    # Entrance Node
+    elif entrance_flag == ENTRANCE and not next_node:
+        conn.close()
+        s.close()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((entrance_addr, PORT))
+        # original's server response (at least it's supposed to be)
+        s.send(decrypted_message[1])
+        s.close()
+        print("This is the entrance node returning to the client")
+        entrance_flag = ""
+        entrance_addr = ""
+    # Exit Node - Send Data Back
+    elif next_node not in node_list:
+        # Close the current connection
+        conn.close()
+        s.close()
+        print("This is the exit node.")
+
+        # Return the message
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        print(next_node)
+        print(PORT)
+        s.connect((next_node, PORT))
+        s.send(decrypted_message[1])
+        server_response = s.recv(BUFFER_SIZE)
+        s.close()
+
+        return_route = decrypted_message[2:]
+        return_route.reverse()
+        return_message = server_response
+        print("Return Route: {}".format(return_route))
+        print("Decrypted Message: {}".format(decrypted_message))
+
+        for x in range(len(return_route)):
+            return_message = sep_as_bytes + return_message
+            if x != 0:
+                return_message = return_route[x - 1] + return_message
+            encrypted_key, encrypted_msg = easy_encrypt(node_list[return_route[x]], return_message)
+            return_message = encrypted_msg + sep_as_bytes + encrypted_key
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((decrypted_message[3], PORT))
+        s.send(return_message)
+        s.close()
+
+    # Continue Listening
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((IP, PORT))
+    s.listen(1)
