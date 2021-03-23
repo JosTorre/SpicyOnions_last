@@ -1,16 +1,6 @@
 #!/usr/bin/env python3
 # coding : utf-8
 
-"""
-node.py
-
-Tasks:
-Send info to directory node
-Decrypt layer of encryption
-Relay data onward
-On data coming back, decrypt and send to previous node
-"""
-
 import socket, pickle
 import argparse
 import configparser
@@ -119,7 +109,7 @@ for x in range(number_of_nodes):
 conn.close()
 s.close()
 
-#Circuit Creation
+#Start Relay Servers
 # ----------------------------------------------------------------
 
 rs = socket.socket()
@@ -145,11 +135,12 @@ rs.listen(2)
 
 backend = default_backend()
 
+#Circuit Creation
+# ----------------------------------------------------------------
 def threaded_client(client):
     endnode = False
     flag =0
-    #conn.send(str.encode('CREATED'))
-
+    
     while True:
 
         data = client.recv(2048) # We get data from Client
@@ -274,6 +265,8 @@ def threaded_client(client):
              nodes = pickle.dumps(arr)
              ms.send(nodes)
 
+#Continue Communication
+# ----------------------------------------------------------------
              while True:
 
                 print("Passing Relay")
@@ -289,114 +282,3 @@ def threaded_client(client):
              ms.close()
              client.close()
 
-
-
-#reply = 'Server Says: ' + data.decode('utf-8')
-#if not data:
-#   break
-#   connection.sendall(str.encode(reply))
-#      connection.close()
-
-while True:
-    Client, address = rs.accept()
-    print('Connected to: ' + address[0] + ':' + str(address[1]))
-    start_new_thread(threaded_client, (Client, ))
-    #ThreadCount += 1
-    #print('Thread Number: ' + str(ThreadCount))
-
-rs.close()
-
-# Run Node
-# ----------------------------------------------------------------
-entrance_flag = ""
-entrance_addr = ""
-
-# Start Listening
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind((IP, PORT))
-s.listen(1)
-
-while 1:
-    conn, addr = s.accept()
-    addr = addr[0]
-    data = conn.recv(BUFFER_SIZE)
-
-    print("[Node Running] Connection address: {}".format(addr))
-
-    if not data: break
-    print("[Node Running] Received data: {}".format(data))
-    encrypted_data: List[bytes] = data.split(sep_as_bytes)
-    decrypted_message: List[bytes] = aes_rsa_decrypt(encrypted_data[1], priv_key, encrypted_data[0]).split(sep_as_bytes)
-    next_node = decrypted_message[0]
-
-    # Entrance Node Case
-    print(len(decrypted_message))
-    print(decrypted_message)
-    if len(decrypted_message) == 4:
-        entrance_flag = decrypted_message[3]
-        entrance_addr = addr
-        if decrypted_message[3] == b'entrance':
-            print("This is the entrance node receiving initial packet.")
-        conn.close()
-        s.close()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Send to Next Node
-    if next_node in node_list:
-        conn.close()
-        s.close()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((next_node, PORT))
-        s.send(decrypted_message[1] + sep_as_bytes + decrypted_message[2])
-        s.close()
-        print("This is not an exit node. Nothing special here.")
-    # Entrance Node
-    elif entrance_flag == ENTRANCE and not next_node:
-        conn.close()
-        s.close()
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((entrance_addr, PORT))
-        # original's server response (at least it's supposed to be)
-        s.send(decrypted_message[1])
-        s.close()
-        print("This is the entrance node returning to the client")
-        entrance_flag = ""
-        entrance_addr = ""
-    # Exit Node - Send Data Back
-    elif next_node not in node_list:
-        # Close the current connection
-        conn.close()
-        s.close()
-        print("This is the exit node.")
-
-        # Return the message
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        print(next_node)
-        print(PORT)
-        s.connect((next_node, PORT))
-        s.send(decrypted_message[1])
-        server_response = s.recv(BUFFER_SIZE)
-        s.close()
-
-        return_route = decrypted_message[2:]
-        return_route.reverse()
-        return_message = server_response
-        print("Return Route: {}".format(return_route))
-        print("Decrypted Message: {}".format(decrypted_message))
-
-        for x in range(len(return_route)):
-            return_message = sep_as_bytes + return_message
-            if x != 0:
-                return_message = return_route[x - 1] + return_message
-            encrypted_key, encrypted_msg = easy_encrypt(node_list[return_route[x]], return_message)
-            return_message = encrypted_msg + sep_as_bytes + encrypted_key
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((decrypted_message[3], PORT))
-        s.send(return_message)
-        s.close()
-
-    # Continue Listening
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((IP, PORT))
-    s.listen(1)
