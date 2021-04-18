@@ -1,9 +1,4 @@
-#EXTEND2 CELL FORMAT: [Command ID, LSTYPE, LSLEN, LSPEC, HTYPE, HLEN, HDATA]
-extend_cell = ["EXTEND2",0, 2, node_addr[len(nodes)-x], "ntor", len(handshake), handshake]
-relay_cell = [3, 1, streamID, digest, len(destination), destination, str.encode(message)]
-#create_cell = [10, circID, 2, len(public_bytes), public_bytes]
-destroy_cell = [4, reason]
-
+#New version of Nodes using Cell Objects
 import sys
 
 class CreateCell:
