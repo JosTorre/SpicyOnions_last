@@ -66,6 +66,16 @@ class RelayCell:
 	def encrypt(key):
 		self.payload = aes_encrypt(key, self.payload)
 		self.recognized = aes_encrypt(key, self.recognized)
+		
+	def full_encrypt(keys):
+		for x in range(len(keys)-1) :
+        		self.payload = aes_encrypt(keys, self.payload)
+			self.recognized = aes_encrypt(keys, self.recognized)
+
+	def full_decrypt(keys):
+		for x in range(len(keys)-1) :
+        		self.payload = aes_decrypt(keys, self.payload)
+			self.recognized = aes_decrypt(keys, self.recognized)
 
 	def recognized():
 		if self.recognized == 0:
