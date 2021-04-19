@@ -41,11 +41,11 @@ tmux split-window -v
 tmux split-window -v
 
 # Send all commands
-tmux send-keys -t 1 "docker run $DOCKER_OPTS sweet_onions/node" Enter
+tmux send-keys -t 1 "docker run $DOCKER_OPTS sweet_onions/new_node" Enter
 tmux send-keys -t 2 "docker run $DOCKER_OPTS sweet_onions/server" Enter
-tmux send-keys -t 3 "docker run $DOCKER_OPTS sweet_onions/node" Enter
+tmux send-keys -t 3 "docker run $DOCKER_OPTS sweet_onions/new_node" Enter
 tmux send-keys -t 4 "docker run $DOCKER_OPTS sweet_onions/directory" Enter
-tmux send-keys -t 5 "docker run $DOCKER_OPTS sweet_onions/node" Enter
+tmux send-keys -t 5 "docker run $DOCKER_OPTS sweet_onions/new_node" Enter
 
 tmux select-layout tiled # Even out all tile
 tmux select-pane -t 4 # Go back to first panel
