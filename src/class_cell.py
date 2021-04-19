@@ -48,7 +48,7 @@ class RelayCell:
 		self.type = 'RELAY'
 		self.command = 3
 		self.recognized = 0 #0 encrypted (3 times)
-		self.streamID = ? # change from node to node
+		self.streamID = 0 # change from node to node
 		self.digest: str = sha224(bytes(msg,"utf-8")).hexdigest() #Hash von Nachricht (klartext)
 		self.len = sys.getsizeof(message)
 		self.data = destip
@@ -69,13 +69,13 @@ class RelayCell:
 		
 	def full_encrypt(keys):
 		for x in range(len(keys)-1) :
-        		self.payload = aes_encrypt(keys, self.payload)
-			self.recognized = aes_encrypt(keys, self.recognized)
+                    self.payload = aes_encrypt(keys[x], self.payload)
+                    self.recognized = aes_encrypt(keys[x], self.recognized)
 
 	def full_decrypt(keys):
 		for x in range(len(keys)-1) :
-        		self.payload = aes_decrypt(keys, self.payload)
-			self.recognized = aes_decrypt(keys, self.recognized)
+                    self.payload = aes_decrypt(keys[x], self.payload)
+                    self.recognized = aes_decrypt(keys[x], self.recognized)
 
 	def recognized():
 		if self.recognized == 0:

@@ -5,7 +5,7 @@
 
 import socket, pickle
 import configparser
-import class_cell.py
+from class_cell import RelayCell, ExtendCell, CreateCell, DestroyCell
 from random import randint, shuffle
 from hashlib import sha224
 from aes_rsa import *
@@ -214,7 +214,7 @@ def load(data):
     cell = pickle.loads(data)
     return cell
     
-def HKDF(secret)
+def HKDF(secret):
     peer_public = x25519.X25519PublicKey.from_public_bytes(secret)
     derived_key = HKDF(
                 algorithm=hashes.SHA256(),

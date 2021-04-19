@@ -4,7 +4,7 @@
 import socket, pickle
 import argparse
 import configparser
-from class_cell import RelayCell, ExtendCell, CreateCell, DestroyCell 
+import ./class_cell.py
 from os import chmod, path
 from typing import List, Dict
 from aes_rsa import *
