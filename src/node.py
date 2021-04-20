@@ -137,10 +137,13 @@ rs.listen(2)
 backend = default_backend()
 circuits = []
 
+
+
 #Functions
 # ----------------------------------------------------------------
 
 def process(cell):
+    print("proecess")
     extends = 0
     proceed = True
 
@@ -276,6 +279,7 @@ def forward(cell):
 # ----------------------------------------------------------------
 
 def threaded_client(back):
+    print("threaded_client")
     proceed = True
 
     while proceed:
