@@ -158,9 +158,7 @@ except socket.error as e:
 
 backend = default_backend()
 
-CreateCircuit(node_addr, public_bytes)
 
-Communicate(node_addr, pubkeys)
 
 
 def CreateCircuit(ips, public_bytes):
@@ -225,3 +223,5 @@ def HKDF(secret):
     ).derive(shared_onion_key)
     return derived_key
 
+CreateCircuit(node_addr, public_bytes)
+Communicate(node_addr, pubkeys)
