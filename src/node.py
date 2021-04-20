@@ -329,8 +329,6 @@ def forward(cell):
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
 
-
-<<<<<<< HEAD
         #Check keys
         if cell.hlen == 32 :
             peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
@@ -347,7 +345,3 @@ def forward(cell):
         print(derived_key)
 
         proceed = process(cell)
-=======
-=======
->>>>>>> 25b401430924ee04a0dbd6770777d3920f1765ac
->>>>>>> 9a95cc23f11986c310807224a2db548c3a018eff
