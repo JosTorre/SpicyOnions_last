@@ -137,6 +137,33 @@ rs.listen(2)
 backend = default_backend()
 circuits = []
 
+#Circuit Creation
+# ----------------------------------------------------------------
+
+def threaded_client(back):
+    proceed = True
+
+    while proceed:
+        data = back.recv(2048) # We get data from predecesor
+        cell = pickle.loads(data)
+
+        #Check keys
+        if cell.hlen == 32 :
+            peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
+            shared_onion_key = private_onion_key.exchange(peer_public)
+            derived_key = HKDF(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=None,
+                info=b'handshake data',
+                backend=backend
+            ).derive(shared_onion_key)
+
+        print('Shared Secret:')
+        print(derived_key)
+
+        proceed = process(cell)
+
 #Functions
 # ----------------------------------------------------------------
 
@@ -271,30 +298,3 @@ def respond(cell):
 def forward(cell):
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
-
-#Circuit Creation
-# ----------------------------------------------------------------
-
-def threaded_client(back):
-    proceed = True
-
-    while proceed:
-        data = back.recv(2048) # We get data from predecesor
-        cell = pickle.loads(data)
-
-        #Check keys
-        if cell.hlen == 32 :
-            peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
-            shared_onion_key = private_onion_key.exchange(peer_public)
-            derived_key = HKDF(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=None,
-                info=b'handshake data',
-                backend=backend
-            ).derive(shared_onion_key)
-
-        print('Shared Secret:')
-        print(derived_key)
-
-        proceed = process(cell)
