@@ -10,7 +10,7 @@ class CreateCell:
 		self.command = 10
 		self.circID = secrets.token_hex(2) # 00 - FF
 		self.htype = 2 
-		self.hlen = len(self.handshake)
+		self.hlen = len(handshake)
 		self.hdata = handshake
 
 	def to_created(handshake_resp):

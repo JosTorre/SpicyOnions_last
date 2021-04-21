@@ -147,10 +147,10 @@ print(public_bytes)
 
 counter = len(node_addr)
 relays = ['CREATE','EXTEND','EXTEND2']
-cs = socket.socket()
+front = socket.socket()
 print('Connecting to Entry Node')
 try:
-    cs.connect((node_addr[i], PORT))
+   front.connect((node_addr[i], PORT))
 except socket.error as e:
     print(str(e))
 
@@ -166,7 +166,7 @@ def CreateCircuit(ips, public_bytes):
         if x == 0:
             create = CreateCell(public_bytes)
             forward(create)
-            response = load(cs.recv(1024))
+            response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDF(cell.hdata))
             if response.command == 11:
                 print("CREATED")
@@ -175,7 +175,7 @@ def CreateCircuit(ips, public_bytes):
         else:
             extend = ExtendCell(arr[x])
             forward(extend)
-            response = load(cs.recv(1024))
+            response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDF(cell.hdata))
             if response.command == 14:
                 print("EXTENDED")
@@ -197,7 +197,7 @@ def Communicate(ip, keys):
             relay = RelayCell(ip[0], message)
             relay.full_encrypt(keys)
             forward(relayCell)
-            cell = load(cs.recv(1024))
+            cell = load(front.recv(1024))
             cell.full_decrypt(keys)
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))
