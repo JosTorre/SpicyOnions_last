@@ -146,7 +146,6 @@ def threaded_client(back):
     while proceed:
         data = back.recv(2048) # We get data from predecesor
         cell = pickle.loads(data)
-        print("thread")
 
         #Check keys
         if cell.hlen == 32 :
@@ -162,19 +161,16 @@ def threaded_client(back):
 
         print('Shared Secret:')
         print(derived_key)
-        
+        print(cell.type) 
         proceed = process(cell)
-        x += 1
-        if x > 1:
-            cell = load_front()
-            proceed = process(cell)
+        print('waiting for client')
 #Functions
 # ----------------------------------------------------------------
 
 def process(cell):
-    print("proecess")
     extends = 0
     proceed = True
+
     if cell.command == 10: #CREATE2
         print(cell.type)
         circuits.append(cell.circID)
@@ -193,9 +189,12 @@ def process(cell):
         else: #Just forward extend
             print(cell.type)
             forward(cell)
+        cell = load_front()
+        print("test processing forward")
+        proceed = process(cell)
+        print('test called process()')
     elif cell.command == 11: #CREATED2
         print(cell.type)
-        print("Created2 test")
         cell.to_extended()
         print(cell.type)
         respond(cell)
@@ -294,13 +293,12 @@ def load_back():
     return cell
 
 def load_front():
-    data = back.recv(1024)
+    data = front.recv(1024)
     cell = pickle.loads(data)
     return cell
 
 def respond(cell):
     pickled_cell = pickle.dumps(cell)
-    print("response test")
     back.send(pickled_cell)
 
 def forward(cell):

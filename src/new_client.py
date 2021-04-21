@@ -162,7 +162,7 @@ backend = default_backend()
 
 
 def CreateCircuit(ips, public_bytes):
-    for x in range(0, len(ips)):
+    for x in range(0, len(ips)-1):
         if x == 0:
             print(type(public_bytes))
             create = CreateCell(public_bytes)
