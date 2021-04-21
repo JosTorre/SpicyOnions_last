@@ -136,7 +136,6 @@ rs.listen(2)
 
 backend = default_backend()
 circuits = []
-
 #Circuit Creation
 # ----------------------------------------------------------------
 
@@ -162,13 +161,11 @@ def threaded_client(back):
         print('Shared Secret:')
         print(derived_key)
         print(cell.type) 
-        proceed = process(cell)
-        print('waiting for client')
+        proceed = process(cell, x)
 #Functions
 # ----------------------------------------------------------------
 
-def process(cell):
-    extends = 0
+def process(cell, extends):
     proceed = True
 
     if cell.command == 10: #CREATE2
@@ -179,6 +176,7 @@ def process(cell):
         respond(cell)
     elif cell.command == 13: #EXTEND2 - 2 Scenarios
         extends += 1
+        print(extends)
         if extends == 1: #Needs to extend
             print(cell.type)
             connect_front(cell.lspec)
@@ -190,9 +188,7 @@ def process(cell):
             print(cell.type)
             forward(cell)
         cell = load_front()
-        print("test processing forward")
-        proceed = process(cell)
-        print('test called process()')
+        proceed = process(cell, extends)
     elif cell.command == 11: #CREATED2
         print(cell.type)
         cell.to_extended()
@@ -214,6 +210,7 @@ def process(cell):
                 print(cell.show_payload())
         else:
             cell.update_stream(circuits[1])
+            print('forwarding relay')
             forward(cell)
             cell = operate_node()
 
@@ -295,6 +292,7 @@ def load_back():
 def load_front():
     data = front.recv(1024)
     cell = pickle.loads(data)
+    print(data)
     return cell
 
 def respond(cell):
