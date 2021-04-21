@@ -164,21 +164,22 @@ backend = default_backend()
 def CreateCircuit(ips, public_bytes):
     for x in range(0, len(ips)):
         if x == 0:
+            print(type(public_bytes))
             create = CreateCell(public_bytes)
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(create.hdata))
             if response.command == 11:
-                print("CREATED")
+                print("CREATED2")
             else:
                 print("NOT CREATED!")
         else:
-            extend = ExtendCell(arr[x])
+            extend = ExtendCell(ips[x], public_bytes)
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(create.hdata))
             if response.command == 14:
-                print("EXTENDED")
+                print("EXTENDED2")
             else:
                 print("NOT EXTENDED!")
 
@@ -214,13 +215,14 @@ def load(data):
     
 def HKDFKey(secret):
     peer_public = x25519.X25519PublicKey.from_public_bytes(secret)
+    shared_onion_key = private_onion_key.exchange(peer_public)
     derived_key = HKDF(
                 algorithm=hashes.SHA256(),
                 length=32,
                 salt=None,
                 info=b'handshake data',
                 backend=backend
-    ).derive(shared_onion_keys_arr)
+    ).derive(shared_onion_key)
     return derived_key
 
 CreateCircuit(node_addr, public_bytes)

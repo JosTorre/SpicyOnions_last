@@ -142,10 +142,11 @@ circuits = []
 
 def threaded_client(back):
     proceed = True
-
+    x = 0
     while proceed:
         data = back.recv(2048) # We get data from predecesor
         cell = pickle.loads(data)
+        print("thread")
 
         #Check keys
         if cell.hlen == 32 :
@@ -161,9 +162,12 @@ def threaded_client(back):
 
         print('Shared Secret:')
         print(derived_key)
-
+        
         proceed = process(cell)
-
+        x += 1
+        if x > 1:
+            cell = load_front()
+            proceed = process(cell)
 #Functions
 # ----------------------------------------------------------------
 
@@ -171,14 +175,13 @@ def process(cell):
     print("proecess")
     extends = 0
     proceed = True
-
     if cell.command == 10: #CREATE2
         print(cell.type)
         circuits.append(cell.circID)
         cell.to_created(public_bytes)
         print(cell.type)
         respond(cell)
-    elif cell.type == 13: #EXTEND2 - 2 Scenarios
+    elif cell.command == 13: #EXTEND2 - 2 Scenarios
         extends += 1
         if extends == 1: #Needs to extend
             print(cell.type)
@@ -192,7 +195,8 @@ def process(cell):
             forward(cell)
     elif cell.command == 11: #CREATED2
         print(cell.type)
-        cell = Extend2Cell.to_extended(cell.hdata)
+        print("Created2 test")
+        cell.to_extended()
         print(cell.type)
         respond(cell)
     elif cell.command == 14: #EXTENDED2
@@ -222,6 +226,7 @@ def process(cell):
         back.close()
         front.close()
     else:
+        print(cell.command)
         print("Non Recognized - Dropping Cell.")
 
     return proceed
@@ -276,6 +281,7 @@ def operate_node():
 
 
 def connect_front(ip):
+    global front
     front = socket.socket() #Initialize Socket for next Node
     try:
       front.connect((ip, PORT)) #Connect with next Node
@@ -294,6 +300,7 @@ def load_front():
 
 def respond(cell):
     pickled_cell = pickle.dumps(cell)
+    print("response test")
     back.send(pickled_cell)
 
 def forward(cell):
