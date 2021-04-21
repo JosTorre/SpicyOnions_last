@@ -137,13 +137,6 @@ rs.listen(2)
 backend = default_backend()
 circuits = []
 
-while True:
-    Client, address = rs.accept()
-    print('Connected to: ' +address[0] + ':' + str(address[1]))
-    start_new_thread(threaded_client,(Client, ))
-
-rs.close()
-
 #Circuit Creation
 # ----------------------------------------------------------------
 
@@ -306,4 +299,11 @@ def respond(cell):
 def forward(cell):
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
+#Run Node
+#-----------------------------------------------------------
+while True:
+    Client, address = rs.accept()
+    print('Connected to: ' +address[0] + ':' + str(address[1]))
+    start_new_thread(threaded_client,(Client, ))
 
+rs.close()
