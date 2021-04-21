@@ -13,14 +13,11 @@ class CreateCell:
 		self.hlen = len(handshake)
 		self.hdata = handshake
 
-	def to_created(handshake_resp):
+	def to_created(self, handshake_resp):
 		self.type = 'CREATED2'
 		self.command = 11
-		self.hlen = len(self.handshake_resp)
+		self.hlen = len(handshake_resp)
 		self.hdata = handshake_resp
-
-	def get_circ_id():
-		return self.circID
 
 class ExtendCell:
 
@@ -35,10 +32,10 @@ class ExtendCell:
 		self.hlen = len(handshake)
 		self.hdata = handshake
 
-	def to_extended(handshake_resp):
+	def to_extended(self, handshake_resp):
 		self.type = 'EXTENDED2'
 		self.command = 14 #in der Doku nicht spezifiziert
-		self.hlen = len(self.handshake_resp)
+		self.hlen = len(handshake_resp)
 		self.hdata = handshake_resp
 		
 
@@ -56,24 +53,24 @@ class RelayCell:
 		self.payload = message
 		#self.padding = ?
 
-	def update_stream(sid):
+	def update_stream(self, sid):
 		self.streamID = sid
 
-	def decrypt(key):
+	def decrypt(self, key):
 		self.payload = aes_decrypt(key, self.payload)
 		self.recognized = aes_decrypt(key, self.recognized)
 		
 
-	def encrypt(key):
+	def encrypt(self, key):
 		self.payload = aes_encrypt(key, self.payload)
 		self.recognized = aes_encrypt(key, self.recognized)
 		
-	def full_encrypt(keys):
+	def full_encrypt(self, keys):
 		for x in range(len(keys)-1) :
                     self.payload = aes_encrypt(keys[x], self.payload)
                     self.recognized = aes_encrypt(keys[x], self.recognized)
 
-	def full_decrypt(keys):
+	def full_decrypt(self, keys):
 		for x in range(len(keys)-1) :
                     self.payload = aes_decrypt(keys[x], self.payload)
                     self.recognized = aes_decrypt(keys[x], self.recognized)

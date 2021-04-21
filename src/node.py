@@ -174,7 +174,7 @@ def process(cell):
 
     if cell.command == 10: #CREATE2
         print(cell.type)
-        circuits[0] = cell.get_circ_id()
+        circuits.append(cell.circID)
         cell.to_created(public_bytes)
         print(cell.type)
         respond(cell)
@@ -185,7 +185,7 @@ def process(cell):
             connect_front(cell.lspec)
             cell = CreateCell(cell.hdata)
             print(cell.type)
-            circuits[1] = cell.get_circ_id()
+            circuits.append(cell.circID)
             forward(cell)
         else: #Just forward extend
             print(cell.type)
@@ -302,8 +302,8 @@ def forward(cell):
 #Run Node
 #-----------------------------------------------------------
 while True:
-    Client, address = rs.accept()
+    back, address = rs.accept()
     print('Connected to: ' +address[0] + ':' + str(address[1]))
-    start_new_thread(threaded_client,(Client, ))
+    start_new_thread(threaded_client,(back, ))
 
 rs.close()

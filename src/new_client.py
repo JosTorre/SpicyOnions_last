@@ -167,7 +167,7 @@ def CreateCircuit(ips, public_bytes):
             create = CreateCell(public_bytes)
             forward(create)
             response = load(front.recv(1024))
-            shared_onion_keys_arr.append(HKDF(cell.hdata))
+            shared_onion_keys_arr.append(HKDFKey(create.hdata))
             if response.command == 11:
                 print("CREATED")
             else:
@@ -176,7 +176,7 @@ def CreateCircuit(ips, public_bytes):
             extend = ExtendCell(arr[x])
             forward(extend)
             response = load(front.recv(1024))
-            shared_onion_keys_arr.append(HKDF(cell.hdata))
+            shared_onion_keys_arr.append(HKDFKey(create.hdata))
             if response.command == 14:
                 print("EXTENDED")
             else:
@@ -212,7 +212,7 @@ def load(data):
     cell = pickle.loads(data)
     return cell
     
-def HKDF(secret):
+def HKDFKey(secret):
     peer_public = x25519.X25519PublicKey.from_public_bytes(secret)
     derived_key = HKDF(
                 algorithm=hashes.SHA256(),
@@ -220,7 +220,7 @@ def HKDF(secret):
                 salt=None,
                 info=b'handshake data',
                 backend=backend
-    ).derive(shared_onion_key)
+    ).derive(shared_onion_keys_arr)
     return derived_key
 
 CreateCircuit(node_addr, public_bytes)
