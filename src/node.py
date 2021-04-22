@@ -146,24 +146,24 @@ def threaded_client(back):
         data = back.recv(2048) # We get data from predecesor
         cell = pickle.loads(data)
 
-        #Check keys
-        if cell.hlen == 32 :
-            peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
-            shared_onion_key = private_onion_key.exchange(peer_public)
-            derived_key = HKDF(
-                algorithm=hashes.SHA256(),
-                length=32,
-                salt=None,
-                info=b'handshake data',
-                backend=backend
-            ).derive(shared_onion_key)
-
-        print('Shared Secret:')
-        print(derived_key)
         print(cell.type) 
         proceed = process(cell)
 #Functions
 # ----------------------------------------------------------------
+def calculate_keys(cell):
+    #Check keys
+    if cell.hlen == 32 :
+        peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
+        shared_onion_key = private_onion_key.exchange(peer_public)
+        derived_key = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b'handshake data',
+            backend=backend
+            ).derive(shared_onion_key)
+        print('Shared Secret:')
+        print(derived_key)
 
 def process(cell):
     proceed = True
@@ -171,6 +171,7 @@ def process(cell):
     if cell.command == 10: #CREATE2
         print(cell.type)
         circuits.append(cell.circID)
+        calculate_keys(cell)
         cell.to_created(public_bytes)
         print(cell.type)
         respond(cell)

@@ -1,7 +1,8 @@
 #New version of Nodes using Cell Objects
 import sys
 import secrets
-import hashlib
+#import hashlib
+from aes_rsa import *
 
 class CreateCell:
 
@@ -53,10 +54,10 @@ class RelayCell:
                 self.command = 3
                 self.recognized = 0 #0 encrypted (3 times)
                 self.streamID = 0 # change from node to node
-                self.digest: str = sha224(bytes(msg,"utf-8")).hexdigest() #Hash von Nachricht (klartext)
+                self.digest = hash(message) #Hash von Nachricht (klartext)
                 self.len = sys.getsizeof(message)
                 self.data = destip
-                self.payload = message
+                self.payload = str(message)
                 #self.padding = ?
 
         def update_stream(self, sid):
@@ -73,13 +74,13 @@ class RelayCell:
                 
         def full_encrypt(self, keys):
                 for x in range(len(keys)-1) :
-                    self.payload = aes_encrypt(keys[x], self.payload)
-                    self.recognized = aes_encrypt(keys[x], self.recognized)
+                    self.payload = aes_encrypt(keys[x], str(self.payload))
+                    self.recognized = aes_encrypt(keys[x], str(self.recognized))
 
         def full_decrypt(self, keys):
                 for x in range(len(keys)-1) :
-                    self.payload = aes_decrypt(keys[x], self.payload)
-                    self.recognized = aes_decrypt(keys[x], self.recognized)
+                    self.payload = aes_decrypt(keys[x], str(self.payload))
+                    self.recognized = aes_decrypt(keys[x], str(self.recognized))
 
         def recognized():
                 if self.recognized == 0:

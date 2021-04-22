@@ -197,7 +197,7 @@ def Communicate(ip, keys):
         else:
             relay = RelayCell(ip[0], message)
             relay.full_encrypt(keys)
-            forward(relayCell)
+            forward(relay)
             cell = load(front.recv(1024))
             cell.full_decrypt(keys)
             print(cell.payload)
