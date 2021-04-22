@@ -155,6 +155,7 @@ def calculate_keys(cell):
     if cell.hlen == 32 :
         peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
         shared_onion_key = private_onion_key.exchange(peer_public)
+        global derived_key
         derived_key = HKDF(
             algorithm=hashes.SHA256(),
             length=32,
@@ -200,15 +201,17 @@ def process(cell):
         respond(cell)
     elif cell.command == 3: #RELAY // Two options
         cell.decrypt(derived_key)
+        print(cell.payload)
         if extends == 0: #If its the Exit Node...
+            print(cell.data)
             connect_front(cell.data)
-            if cell.recognized() : #Check if Cell is still encrypted
-                print("Forwarding to Destination Server")
-                forward(cell.payload)
-                cell = operate_endnode()
-            else: 
-                print("Cell not recognized")
-                print(cell.show_payload())
+            #if cell.recognized == 0 : #Check if Cell is still encrypted
+            print("Forwarding to Destination Server")
+            forward(cell.payload)
+            cell = operate_endnode()
+            #else: 
+                #print("Cell not recognized")
+                #print(cell.show_payload())
         else:
             cell.update_stream(circuits[1])
             print('forwarding relay')
@@ -230,6 +233,7 @@ def process(cell):
 
 
 def operate_endnode():
+    operate = True
     while operate:
         print("Waiting for Response")
         response = front.recv(1024)
@@ -254,6 +258,7 @@ def operate_endnode():
     return relay
 
 def operate_node():
+    operate = True
     while operate:
         print("Waiting for Response")
         relay = load_front()

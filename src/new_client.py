@@ -164,11 +164,12 @@ backend = default_backend()
 def CreateCircuit(ips, public_bytes):
     for x in range(0, len(ips)-1):
         if x == 0:
-            print(type(public_bytes))
             create = CreateCell(public_bytes)
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(create.hdata))
+            print("Shared Key")
+            print(shared_onion_keys_arr[x])
             if response.command == 11:
                 print("CREATED2")
             else:
@@ -177,7 +178,9 @@ def CreateCircuit(ips, public_bytes):
             extend = ExtendCell(ips[x], public_bytes)
             forward(extend)
             response = load(front.recv(1024))
-            shared_onion_keys_arr.append(HKDFKey(create.hdata))
+            shared_onion_keys_arr.append(HKDFKey(extend.hdata))
+            print("Shared Key")
+            print(shared_onion_keys_arr[x])
             if response.command == 14:
                 print("EXTENDED2")
             else:
