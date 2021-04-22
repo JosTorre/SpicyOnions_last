@@ -50,7 +50,6 @@ args = parser.parse_args()
 
 # Get node's keypair
 # ----------------------------------------------------------------
-
 # Check if key generation is needed
 if args.generate_keys:
     print("Generating RSA key pair.")
@@ -110,6 +109,7 @@ for x in range(number_of_nodes):
 conn.close()
 s.close()
 
+
 #Start Relay Servers
 # ----------------------------------------------------------------
 
@@ -132,6 +132,7 @@ public_bytes = public_onion_key.public_bytes(
 )
 
 print('Ready for Circuit...')
+extends = 0
 rs.listen(2)
 
 backend = default_backend()
@@ -141,7 +142,6 @@ circuits = []
 
 def threaded_client(back):
     proceed = True
-    x = 0
     while proceed:
         data = back.recv(2048) # We get data from predecesor
         cell = pickle.loads(data)
@@ -161,13 +161,13 @@ def threaded_client(back):
         print('Shared Secret:')
         print(derived_key)
         print(cell.type) 
-        proceed = process(cell, x)
+        proceed = process(cell)
 #Functions
 # ----------------------------------------------------------------
 
-def process(cell, extends):
+def process(cell):
     proceed = True
-
+    global extends
     if cell.command == 10: #CREATE2
         print(cell.type)
         circuits.append(cell.circID)
@@ -175,8 +175,8 @@ def process(cell, extends):
         print(cell.type)
         respond(cell)
     elif cell.command == 13: #EXTEND2 - 2 Scenarios
-        extends += 1
         print(extends)
+        extends += 1
         if extends == 1: #Needs to extend
             print(cell.type)
             connect_front(cell.lspec)
@@ -188,7 +188,7 @@ def process(cell, extends):
             print(cell.type)
             forward(cell)
         cell = load_front()
-        proceed = process(cell, extends)
+        proceed = process(cell)
     elif cell.command == 11: #CREATED2
         print(cell.type)
         cell.to_extended()
