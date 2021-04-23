@@ -10,7 +10,7 @@ class CreateCell:
                 self.type = 'CREATE2'
                 self.command = 10
                 self.circID = secrets.token_hex(2) # 00 - FF
-                self.htype = 2 
+                self.htype = '0x0002' 
                 self.hlen = len(handshake)
                 self.hdata = handshake
 
@@ -23,8 +23,11 @@ class CreateCell:
         def to_extended(self): 
                 self.type = 'EXTENDED2'
                 self.command = 14
-                self.lspec = 0
-                self.htype = 'ntor'
+                self.lspec = None 
+                self.htype = '0x0002'
+
+        def print_it(self):
+            print('{}: [{}|{}|{}|{}|{}]'.format(self.type, self.command, self.circID, self.htype, self.hlen, self.hdata))
 
 class ExtendCell:
 
@@ -32,12 +35,16 @@ class ExtendCell:
                 
                 self.type = 'EXTEND2'
                 self.command = 13 #in der Doku nicht spezifiziert
-                self.lstype = 0
-                self.lslen = 2
+                self.nspec = 1
+                self.lstype = '00' 
+                self.lslen = len(nodeip) 
                 self.lspec = nodeip
-                self.htype = 'ntor'
+                self.htype = '0x0002'
                 self.hdata = handshake
                 self.hlen = len(handshake)
+
+        def print_it(self):
+            print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.lstype, self.lslen, self.lspec, self.htype, self.hlen, self.hdata))
 
         #def to_extended(self, handshake_resp):
                 
@@ -52,18 +59,22 @@ class RelayCell:
 
                 self.type = 'RELAY'
                 self.command = 3
-                self.recognized = 0 #0 encrypted (3 times)
+                self.recognized = '0' #0 encrypted (3 times)
                 self.streamID = 0 # change from node to node
                 self.digest = hash(message) #Hash von Nachricht (klartext)
                 self.len = sys.getsizeof(message)
                 self.data = destip
-                self.payload = str(message)
+                self.payload = message
                 #self.padding = ?
+
+        def print_it(self):
+            print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.recognized, self.streamID, self.digest, self.len, self.data, self.payload))
 
         def update_stream(self, sid):
                 self.streamID = sid
 
         def decrypt(self, key):
+                print(self.payload)
                 self.payload = aes_decrypt(key, self.payload)
                 self.recognized = aes_decrypt(key, self.recognized)
                 print(self.recognized) 
@@ -75,12 +86,15 @@ class RelayCell:
         def full_encrypt(self, keys):
                 for x in range(len(keys)-1) :
                     self.payload = aes_encrypt(keys[x], str(self.payload))
+                    print(self.payload)
+                    print(str(self.payload))
+                    print(bytes(str(self.payload)))
                     self.recognized = aes_encrypt(keys[x], str(self.recognized))
-
         def full_decrypt(self, keys):
                 for x in range(len(keys)-1) :
-                    self.payload = aes_decrypt(keys[x], str(self.payload))
-                    self.recognized = aes_decrypt(keys[x], str(self.recognized))
+                    self.payload = aes_decrypt(keys[x], self.payload)
+                    print(self.payload)
+                    self.recognized = aes_decrypt(keys[x], self.recognized)
 
         def recognized():
                 print(self.recognized)

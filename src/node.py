@@ -201,12 +201,12 @@ def process(cell):
         respond(cell)
     elif cell.command == 3: #RELAY // Two options
         cell.decrypt(derived_key)
-        print(cell.payload)
         if extends == 0: #If its the Exit Node...
             print(cell.data)
             connect_front(cell.data)
             #if cell.recognized == 0 : #Check if Cell is still encrypted
             print("Forwarding to Destination Server")
+
             forward(cell.payload)
             cell = operate_endnode()
             #else: 

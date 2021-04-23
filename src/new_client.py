@@ -165,27 +165,29 @@ def CreateCircuit(ips, public_bytes):
     for x in range(0, len(ips)-1):
         if x == 0:
             create = CreateCell(public_bytes)
+            create.print_it() #prints cells contents
             forward(create)
             response = load(front.recv(1024))
-            shared_onion_keys_arr.append(HKDFKey(create.hdata))
-            print("Shared Key")
-            print(shared_onion_keys_arr[x])
+            shared_onion_keys_arr.append(HKDFKey(response.hdata))
+            #print("Shared Key")
+            #print(shared_onion_keys_arr[x])
             if response.command == 11:
                 print("CREATED2")
             else:
                 print("NOT CREATED!")
         else:
             extend = ExtendCell(ips[x], public_bytes)
+            extend.print_it() #prints cells contents
             forward(extend)
             response = load(front.recv(1024))
-            shared_onion_keys_arr.append(HKDFKey(extend.hdata))
-            print("Shared Key")
-            print(shared_onion_keys_arr[x])
+            shared_onion_keys_arr.append(HKDFKey(response.hdata))
+            #print("Shared Key")
+            #print(shared_onion_keys_arr[x])
             if response.command == 14:
                 print("EXTENDED2")
             else:
                 print("NOT EXTENDED!")
-
+        print(shared_onion_keys_arr)
     print("CIRCUIT CREATED")
 
 def Communicate(ip, keys):
@@ -199,10 +201,12 @@ def Communicate(ip, keys):
             open_channel = False
         else:
             relay = RelayCell(ip[0], message)
-            relay.full_encrypt(keys)
+            relay.full_encrypt(shared_onion_keys_arr)
+            print(relay.payload)
+            relay.print_it() #prints cell contents
             forward(relay)
             cell = load(front.recv(1024))
-            cell.full_decrypt(keys)
+            cell.full_decrypt(shared_onion_keys_arr)
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))
 

@@ -22,7 +22,7 @@ def pad(msg: bytes) -> str:
     assert isinstance(msg,str), "The variable msg must be a string"
     # (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING
     msg = msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING  
-    print(len(msg))
+    #print(len(msg))
     return msg
         
 
@@ -68,14 +68,13 @@ def aes_encrypt(key: bytes, msg: str) -> str:
 
     padded_msg: str = pad(msg)
     keydigest = hashes.Hash(hashes.SHA256())
-    print('asdf')
     keydigest.update(key)
     cipher = AES.new(keydigest.finalize())
     encrypted: str = cipher.encrypt(padded_msg)
-
+    print(encrypted)
     return encrypted
 
-def aes_decrypt(key: bytes, msg: bytes) -> bytes:
+def aes_decrypt(key: bytes, msg: bytes) -> str:
     """Decrypt msg using AES with key
 
     :param key: The AES key encoded in base 64
@@ -86,17 +85,21 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     :rtype: bytes
     """
 
-    assert isinstance(msg,bytes), "The variable msg must be bytes"
+    #assert isinstance(msg,bytes), "The variable msg must be bytes"
     assert isinstance(key,bytes), "The variable key must be bytes"
     keydigest = hashes.Hash(hashes.SHA256(),backend=backend)
+    print(msg)
     keydigest.update(key)
     uncipher = AES.new(keydigest.finalize())
     # Get the string representation
-    decrypted: str = uncipher.decrypt(msg)
+    b64_msg = b64decode(msg)
+    print(b64_msg)
+    decrypted: str = uncipher.decrypt(b64_msg)
+    print(decrypted)
     # Remove the padding put before
+    decrypted = decrypted.decode()
     padding = PADDING.encode()
     decrypted = decrypted.rstrip(padding)
-
     return decrypted
 
 def rsa_encrypt(pub_key: bytes, msg: str) -> str:
