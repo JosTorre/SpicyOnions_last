@@ -165,28 +165,28 @@ def CreateCircuit(ips, public_bytes):
     for x in range(0, len(ips)-1):
         if x == 0:
             create = CreateCell(public_bytes)
-            create.print_it() #prints cells contents
+            print(create) #prints cells contents
             create.print_type() # prints cell attribut types
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
             #print("Shared Key")
             #print(shared_onion_keys_arr[x])
-            if response.command == 11:
-                print("CREATED2")
+            if response.command == b'11':
+                print(response)
             else:
                 print("NOT CREATED!")
         else:
             extend = ExtendCell(ips[x], public_bytes)
-            extend.print_it() #prints cells contents
+            print(extend) #prints cells contents
             extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
             #print("Shared Key")
             #print(shared_onion_keys_arr[x])
-            if response.command == 14:
-                print("EXTENDED2")
+            if response.command == b'14':
+                print(response)
             else:
                 print("NOT EXTENDED!")
         print(shared_onion_keys_arr)
@@ -199,16 +199,17 @@ def Communicate(ip, keys):
         if message == "DESTROY":
             reason = input('Give a reason: ')
             destroy = DestroyCell(reason)
+            print(destroy)
             forward(destroy)
             open_channel = False
         else:
             relay = RelayCell(ip[0], message)
             relay.print_type() # print cell Attribute types
             relay.full_encrypt(shared_onion_keys_arr)
-            print(relay.payload)
-            relay.print_it() #prints cell contents
+            print(relay) #prints cell contents
             forward(relay)
             cell = load(front.recv(1024))
+            print(cell)
             cell.full_decrypt(shared_onion_keys_arr)
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))

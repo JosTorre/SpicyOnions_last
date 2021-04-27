@@ -146,7 +146,6 @@ def threaded_client(back):
         data = back.recv(2048) # We get data from predecesor
         cell = pickle.loads(data)
 
-        print(cell.type) 
         proceed = process(cell)
 #Functions
 # ----------------------------------------------------------------
@@ -169,37 +168,39 @@ def calculate_keys(cell):
 def process(cell):
     proceed = True
     global extends
-    if cell.command == 10: #CREATE2
-        print(cell.type)
-        circuits.append(cell.circID)
+    print(cell)
+    if cell.command == b'10': #CREATE2
+        #print(cell.type)
         calculate_keys(cell)
+        circuits.append(cell.circID)
+        print("Circuit IDs: {}".format(circuits))
         cell.to_created(public_bytes)
-        print(cell.type)
+        #print(cell.type)
         respond(cell)
-    elif cell.command == 13: #EXTEND2 - 2 Scenarios
-        print(extends)
+    elif cell.command == b'13': #EXTEND2 - 2 Scenarios
         extends += 1
         if extends == 1: #Needs to extend
-            print(cell.type)
+            #print(cell.type)
             connect_front(cell.lspec)
             cell = CreateCell(cell.hdata)
-            print(cell.type)
+            #print(cell.type)
             circuits.append(cell.circID)
+            print("Circuit IDs: {}".format(circuits))
             forward(cell)
         else: #Just forward extend
-            print(cell.type)
+            #print(cell.type)
             forward(cell)
         cell = load_front()
         proceed = process(cell)
-    elif cell.command == 11: #CREATED2
-        print(cell.type)
+    elif cell.command == b'11': #CREATED2
+        #print(cell.type)
         cell.to_extended()
-        print(cell.type)
+        #print(cell.type)
         respond(cell)
-    elif cell.command == 14: #EXTENDED2
-        print(cell.type)
+    elif cell.command == b'14': #EXTENDED2
+        #print(cell.type)
         respond(cell)
-    elif cell.command == 3: #RELAY // Two options
+    elif cell.command == b'3': #RELAY // Two options
         cell.decrypt(derived_key)
         if extends == 0: #If its the Exit Node...
             print(cell.data)
@@ -218,8 +219,10 @@ def process(cell):
             forward(cell)
             cell = operate_node()
 
-    elif cell.command == 4: #DESTROY
-        print("DESTROY")
+    elif cell.command == b'4': #DESTROY
+        #print(cell.type)
+        circuits.clear()
+        print('Circuit IDs: {}'.format(circuits))
         proceed = False
         forward(cell)
         respond(cell)
@@ -239,18 +242,23 @@ def operate_endnode():
         response = front.recv(1024)
         print("Processing Response")
         relay = RelayCell(0, response)
+        print(relay)
         relay.encrypt(derived_key)
         relay.update_stream(circuit[0])
         print("Sending Relay")
+        print(relay)
         respond(relay)
 
         client_response = back.recv(1024)
         relay = load(client_response)
+        print(relay)
         if relay.command == 4:
             operate = False
         else:
+            relay.update_stream(circuits[1])
             relay.decrypt(derived_key)
             if relay.recognized() :
+                print(relay)
                 forward(relay)
             else:
                 print("Relay not recognized")
@@ -262,19 +270,24 @@ def operate_node():
     while operate:
         print("Waiting for Response")
         relay = load_front()
+        print(relay)
         print("Processing Response")
         relay.encrypt(derived_key)
         relay.update_stream(stream[0])
         print("Sending Relay")
+        print(relay)
         respond(relay)
         print("Waiting for Response")
         relay = load_back()
         if relay.command == 4:
             operate = False
         else:
+            print(relay)
             print("Processing Response")
+            relay.update_stream(circuits[1])
             relay.decrypt(derived_key)
             if relay.recognized() :
+                print(relay)
                 forward(relay)
             else:
                 print("Relay not recognized")

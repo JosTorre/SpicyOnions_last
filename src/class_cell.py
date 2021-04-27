@@ -7,27 +7,28 @@ from aes_rsa import *
 class CreateCell:
 
         def __init__(self, handshake):
-                self.type = 'CREATE2'
+                self.type = b'CREATE2'
                 self.command = b'10'
-                self.circID = secrets.token_hex(2) # 00 - FF
-                self.htype = '0x0002' 
-                self.hlen = len(handshake)
+                self.circID = str.encode(secrets.token_hex(2)) # 00 - FF
+                self.htype = b'0x0002'
+                self.hlen = sys.getsizeof(handshake)
                 self.hdata = handshake
 
         def to_created(self, handshake_resp):
-                self.type = 'CREATED2'
-                self.command = 11
-                self.hlen = len(handshake_resp)
+                self.type = b'CREATED2'
+                self.command = b'11'
+                self.hlen = sys.getsizeof(handshake_resp)
                 self.hdata = handshake_resp
         
         def to_extended(self): 
-                self.type = 'EXTENDED2'
-                self.command = 14
-                self.lspec = None 
-                self.htype = '0x0002'
+                self.type = b'EXTENDED2'
+                self.command = b'14'
 
-        def print_it(self):
-            print('{}: [{}|{}|{}|{}|{}]'.format(self.type, self.command, self.circID, self.htype, self.hlen, self.hdata))
+        def __str__(self):
+            if self.command == b'10':
+                return '{}: [{}|{}|{}|{}|{}]'.format(self.type.decode('utf-8'), self.command.decode('utf-8'), self.circID, self.htype.decode('utf-8'), self.hlen, self.hdata.hex())
+            else:
+                return '{}: [{}|{}|{}]'.format(self.type.decode('utf-8'), self.command.decode('utf-8'), self.hlen, self.hdata.hex())
         
         def print_type(self):
                 print('Typ: {}  Länge: {} '.format(type(self.type), sys.getsizeof(self.type)))
@@ -41,18 +42,18 @@ class ExtendCell:
 
         def __init__(self, nodeip, handshake):
                 
-                self.type = 'EXTEND2'
-                self.command = 13 #in der Doku nicht spezifiziert
-                self.nspec = 1
-                self.lstype = '00' 
+                self.type = b'EXTEND2'
+                self.command = b'13' #in der Doku nicht spezifiziert
+                self.nspec = b'1'
+                self.lstype = b'00' 
                 self.lslen = len(nodeip) 
                 self.lspec = nodeip
-                self.htype = '0x0002'
+                self.htype = b'0x0002'
                 self.hdata = handshake
-                self.hlen = len(handshake)
+                self.hlen = sys.getsizeof(handshake)
 
-        def print_it(self):
-            print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.lstype, self.lslen, self.lspec, self.htype, self.hlen, self.hdata))
+        def __str__(self):
+            return '{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type.decode('utf-8'), self.command.decode('utf-8'), self.lstype.decode('utf-8'), self.lslen, self.lspec, self.htype.decode('utf-8'), self.hlen, self.hdata.hex())
 
         def print_type(self):
                 print('Typ: {}  Länge: {} '.format(type(self.type), sys.getsizeof(self.type)))
@@ -66,25 +67,19 @@ class ExtendCell:
                 print('Typ: {}  Länge: {} '.format(type(self.hdata), sys.getsizeof(self.hdata)))
 
 
-        #def to_extended(self, handshake_resp):
-                
-                #self.type = 'EXTENDED2'
-                #self.command = 14 #in der Doku nicht spezifiziert
-                #self.hlen = len(handshake_resp)
-                #self.hdata = handshake_resp
 
 class RelayCell:
 
         def __init__(self, destip, message):
 
-                self.type = 'RELAY'
-                self.command = 3
-                self.recognized = '0' #0 encrypted (3 times)
-                self.streamID = 0 # change from node to node
+                self.type = b'RELAY'
+                self.command = b'3'
+                self.recognized = b'0' #0 encrypted (3 times)
+                self.streamID = b'0' # change from node to node
                 self.digest = hash(message) #Hash von Nachricht (klartext)
                 self.len = sys.getsizeof(message)
                 self.data = destip
-                self.payload = message
+                self.payload = str.encode(message)
                 #self.padding = ?
 
         def print_type(self):
@@ -97,8 +92,8 @@ class RelayCell:
                 print('Typ: {}  Länge: {} '.format(type(self.data), sys.getsizeof(self.data)))
                 print('Typ: {}  Länge: {} '.format(type(self.payload), sys.getsizeof(self.payload)))
 
-        def print_it(self):
-            print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.recognized, self.streamID, self.digest, self.len, self.data, self.payload))
+        def __str__(self):
+            return '{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type.decode('utf-8'), self.command.decode('utf-8'), self.recognized, self.streamID, self.digest, self.len, self.data, self.payload)
 
         def update_stream(self, sid):
                 self.streamID = sid
@@ -135,11 +130,14 @@ class RelayCell:
                         return False
 
         def show_payload():
-                return self.payload
+                return self.payload.decode('utf-8')
 
 class DestroyCell:
 
         def __init__(self, reason):
-                self.type = 'DESTROY'
-                self.command = 4
+                self.type = b'DESTROY'
+                self.command = b'4'
                 self.payload = reason
+
+        def __str__(self):
+            return "{}: [{}|{}]"
