@@ -8,7 +8,7 @@ class CreateCell:
 
         def __init__(self, handshake):
                 self.type = 'CREATE2'
-                self.command = 10
+                self.command = b'10'
                 self.circID = secrets.token_hex(2) # 00 - FF
                 self.htype = '0x0002' 
                 self.hlen = len(handshake)
@@ -28,6 +28,14 @@ class CreateCell:
 
         def print_it(self):
             print('{}: [{}|{}|{}|{}|{}]'.format(self.type, self.command, self.circID, self.htype, self.hlen, self.hdata))
+        
+        def print_type(self):
+                print('Typ: {}  Länge: {} '.format(type(self.type), sys.getsizeof(self.type)))
+                print('Typ: {}  Länge: {} '.format(type(self.command), sys.getsizeof(self.command)))
+                print('Typ: {}  Länge: {} '.format(type(self.circID), sys.getsizeof(self.circID)))
+                print('Typ: {}  Länge: {} '.format(type(self.htype), sys.getsizeof(self.htype)))
+                print('Typ: {}  Länge: {} '.format(type(self.hlen), sys.getsizeof(self.hlen)))
+                print('Typ: {}  Länge: {} '.format(type(self.hdata), sys.getsizeof(self.hdata)))
 
 class ExtendCell:
 
@@ -45,6 +53,18 @@ class ExtendCell:
 
         def print_it(self):
             print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.lstype, self.lslen, self.lspec, self.htype, self.hlen, self.hdata))
+
+        def print_type(self):
+                print('Typ: {}  Länge: {} '.format(type(self.type), sys.getsizeof(self.type)))
+                print('Typ: {}  Länge: {} '.format(type(self.command), sys.getsizeof(self.command)))
+                print('Typ: {}  Länge: {} '.format(type(self.nspec), sys.getsizeof(self.nspec)))
+                print('Typ: {}  Länge: {} '.format(type(self.nspec), sys.getsizeof(self.lstype)))
+                print('Typ: {}  Länge: {} '.format(type(self.lslen), sys.getsizeof(self.lslen)))
+                print('Typ: {}  Länge: {} '.format(type(self.lspec), sys.getsizeof(self.lspec)))
+                print('Typ: {}  Länge: {} '.format(type(self.htype), sys.getsizeof(self.htype)))
+                print('Typ: {}  Länge: {} '.format(type(self.hlen), sys.getsizeof(self.hlen)))
+                print('Typ: {}  Länge: {} '.format(type(self.hdata), sys.getsizeof(self.hdata)))
+
 
         #def to_extended(self, handshake_resp):
                 
@@ -66,6 +86,16 @@ class RelayCell:
                 self.data = destip
                 self.payload = message
                 #self.padding = ?
+
+        def print_type(self):
+                print('Typ: {}  Länge: {} '.format(type(self.type), sys.getsizeof(self.type)))
+                print('Typ: {}  Länge: {} '.format(type(self.command), sys.getsizeof(self.command)))
+                print('Typ: {}  Länge: {} '.format(type(self.recognized), sys.getsizeof(self.recognized)))
+                print('Typ: {}  Länge: {} '.format(type(self.streamID), sys.getsizeof(self.streamID)))
+                print('Typ: {}  Länge: {} '.format(type(self.digest), sys.getsizeof(self.digest)))
+                print('Typ: {}  Länge: {} '.format(type(self.len), sys.getsizeof(self.len)))
+                print('Typ: {}  Länge: {} '.format(type(self.data), sys.getsizeof(self.data)))
+                print('Typ: {}  Länge: {} '.format(type(self.payload), sys.getsizeof(self.payload)))
 
         def print_it(self):
             print('{}: [{}|{}|{}|{}|{}|{}|{}]'.format(self.type, self.command, self.recognized, self.streamID, self.digest, self.len, self.data, self.payload))

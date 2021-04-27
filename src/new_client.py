@@ -166,6 +166,7 @@ def CreateCircuit(ips, public_bytes):
         if x == 0:
             create = CreateCell(public_bytes)
             create.print_it() #prints cells contents
+            create.print_type() # prints cell attribut types
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
@@ -178,6 +179,7 @@ def CreateCircuit(ips, public_bytes):
         else:
             extend = ExtendCell(ips[x], public_bytes)
             extend.print_it() #prints cells contents
+            extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
@@ -201,6 +203,7 @@ def Communicate(ip, keys):
             open_channel = False
         else:
             relay = RelayCell(ip[0], message)
+            relay.print_type() # print cell Attribute types
             relay.full_encrypt(shared_onion_keys_arr)
             print(relay.payload)
             relay.print_it() #prints cell contents
