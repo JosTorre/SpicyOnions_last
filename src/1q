@@ -11,9 +11,9 @@ from cryptography.hazmat.backends import default_backend
 
 backend = default_backend()
 BLOCK_SIZE: int = 16
-PADDING: str = '=' # war } vorher
+PADDING: bytes = b'=' # war } vorher
 
-def pad(msg: str) -> str:
+def pad(msg: bytes) -> str:
     """Pad message in order to have 16 bytes blocks
 
     :return: The padded message
@@ -24,7 +24,6 @@ def pad(msg: str) -> str:
     msg = msg + (BLOCK_SIZE - len(msg) % BLOCK_SIZE) * PADDING  
     print(len(msg))
     print(msg)
-    print(type(msg))
     return msg
         
 
@@ -73,11 +72,10 @@ def aes_encrypt(key: bytes, msg: str) -> str:
     keydigest.update(key)
     cipher = AES.new(keydigest.finalize())
     encrypted: str = cipher.encrypt(padded_msg)
-    encoded = b64encode(encrypted)
-    print(encoded)
-    return str(encoded, 'utf-8')
+    #print('tester')
+    return encrypted
 
-def aes_decrypt(key: bytes, msg: bytes) -> bytes:
+def aes_decrypt(key: bytes, msg: bytes) -> str:
     """Decrypt msg using AES with key
 
     :param key: The AES key encoded in base 64
@@ -88,23 +86,22 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     :rtype: bytes
     """
 
-    assert isinstance(msg,bytes), "The variable msg must be bytes"
+    #assert isinstance(msg,bytes), "The variable msg must be bytes"
     assert isinstance(key,bytes), "The variable key must be bytes"
     keydigest = hashes.Hash(hashes.SHA256(),backend=backend)
     print(msg)
     keydigest.update(key)
     uncipher = AES.new(keydigest.finalize())
     # Get the string representation
-    #paddedmsg = pad(msg.decode('utf8','ignore'))
-    #b64_msg = b64decode(paddedmsg)
-    #print(b64_msg)
-    decoded = b64decode(msg)
-    decrypted: str = uncipher.decrypt(decoded)
+    paddedmsg = pad(msg.decode('utf8','ignore'))
+    b64_msg = b64decode(paddedmsg)
+    print(b64_msg)
+    decrypted: str = uncipher.decrypt(b64_msg)
     print(decrypted)
     # Remove the padding put before
-    #decrypted = decrypted.decode()
+    decrypted = decrypted.decode()
     padding = PADDING.encode()
-    #decrypted = decrypted.rstrip(padding)
+    decrypted = decrypted.rstrip(padding)
     return decrypted
 
 def rsa_encrypt(pub_key: bytes, msg: str) -> str:

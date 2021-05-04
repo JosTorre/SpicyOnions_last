@@ -79,7 +79,7 @@ class RelayCell:
                 self.digest = hash(message) #Hash von Nachricht (klartext)
                 self.len = sys.getsizeof(message)
                 self.data = destip
-                self.payload = str.encode(message)
+                self.payload = message
                 #self.padding = ?
 
         def print_type(self):
@@ -101,20 +101,23 @@ class RelayCell:
         def decrypt(self, key):
                 print(self.payload)
                 self.payload = aes_decrypt(key, self.payload)
-                self.recognized = aes_decrypt(key, self.recognized)
-                print(self.recognized) 
+                #selrecognized = aes_decrypt(key, self.recognized)
+                #print(self.recognized) 
 
         def encrypt(self, key):
                 self.payload = aes_encrypt(key, self.payload)
                 self.recognized = aes_encrypt(key, self.recognized)
                 
         def full_encrypt(self, keys):
-                for x in range(len(keys)-1) :
-                    self.payload = aes_encrypt(keys[x], str(self.payload))
-                    print(self.payload)
-                    print(str(self.payload))
-                    print(bytes(str(self.payload)))
-                    self.recognized = aes_encrypt(keys[x], str(self.recognized))
+                for x in range(len(keys)) :
+                    print(x)
+                    print(keys[x])
+                    #print(self.payload)
+                    self.payload = aes_encrypt(keys[2-x], self.payload)
+                    #print(self.payload)
+                    #print(str(self.payload))
+                    #print(bytes(str(self.payload)))
+                    #self.recognized = aes_encrypt(keys[2-x], str(self.recognized))
         def full_decrypt(self, keys):
                 for x in range(len(keys)-1) :
                     self.payload = aes_decrypt(keys[x], self.payload)
@@ -137,7 +140,14 @@ class DestroyCell:
         def __init__(self, reason):
                 self.type = b'DESTROY'
                 self.command = b'4'
-                self.payload = reason
+                self.circID = b'0'
+                self.reason = reason
 
         def __str__(self):
-            return "{}: [{}|{}]"
+            return "{}: [{}|{}|{}]".format(self.type.decode('utf-8'), self.command.decode('utf-8'), self.circID.decode('utf-8'), self.reason)
+
+        def set_circuit_id(self, new_id):
+            self.circID = new_id
+
+        def print_type(self):
+            print('{} : [{},{}|{},{}|{},{}]'.format(self.type.decode('utf-8'), type(self.command),sys.getsizeof(self.command), type(self.circID), sys.getsizeof(self.circID), type(self.reason), sys.getsizeof(self.reason))) 

@@ -3,7 +3,7 @@
 
  
 
-import socket, pickle
+import socket, pickle, sys, secrets
 import configparser
 from class_cell import RelayCell, ExtendCell, CreateCell, DestroyCell
 from random import randint, shuffle
@@ -81,7 +81,7 @@ dest_ip: str = input("Destination Address: ")
 dir_arr = dir_data.split(SEP)
 NUM_ROUTERS: int = int(dir_arr[0])
 dir_arr = dir_arr[1:]
-print(dir_arr)
+#print(dir_arr)
 # parse the directory data string
 in_keys = []
 in_addr = []
@@ -109,7 +109,7 @@ while i < NUM_NODES:
     pubkeys.append(in_keys[y[i]])
     node_addr.append(in_addr[y[i]])
     i+=1
-print(node_addr)
+#print(node_addr)
 
  
 
@@ -127,7 +127,6 @@ private_bytes = private_onion_key.private_bytes(
         format=serialization.PrivateFormat.Raw,
         encryption_algorithm=serialization.NoEncryption()
 )
-print(private_bytes)
 public_onion_key = private_onion_key.public_key()
 
  
@@ -136,7 +135,6 @@ public_bytes = public_onion_key.public_bytes(
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw
 )
-print(public_bytes)
 
  
 
@@ -144,7 +142,8 @@ print(public_bytes)
 # ----------------------------------------------------------------
 
  
-
+circuits = []
+streams = []
 counter = len(node_addr)
 relays = ['CREATE','EXTEND','EXTEND2']
 front = socket.socket()
@@ -166,7 +165,8 @@ def CreateCircuit(ips, public_bytes):
         if x == 0:
             create = CreateCell(public_bytes)
             print(create) #prints cells contents
-            create.print_type() # prints cell attribut types
+            #create.print_type() # prints cell attribut types
+            circuits.append(create.circID)
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
@@ -179,7 +179,7 @@ def CreateCircuit(ips, public_bytes):
         else:
             extend = ExtendCell(ips[x], public_bytes)
             print(extend) #prints cells contents
-            extend.print_type() #print cell attribute types
+            #extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
@@ -194,19 +194,29 @@ def CreateCircuit(ips, public_bytes):
 
 def Communicate(ip, keys):
     open_channel = True
+    streams.append(secrets.token_hex(2))
     while open_channel:
         message = input('Say Something: ')
         if message == "DESTROY":
             reason = input('Give a reason: ')
             destroy = DestroyCell(reason)
+            destroy.set_circuit_id(circuits[0])
             print(destroy)
+            destroy.print_type()
             forward(destroy)
+            streams.clear()
+            front.close()
             open_channel = False
+            print('CIRCUIT DESTROYED!')
         else:
             relay = RelayCell(ip[0], message)
-            relay.print_type() # print cell Attribute types
+            #relay.print_type() # print cell Attribute types
+            relay.update_stream(streams[0])
+            print(type(relay.payload))
+            print(relay)
             relay.full_encrypt(shared_onion_keys_arr)
-            print(relay) #prints cell contents
+            relay.payload = relay.payload.encode()
+            print(relay) #prints cell contentsi
             forward(relay)
             cell = load(front.recv(1024))
             print(cell)

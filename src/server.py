@@ -8,7 +8,7 @@ Sends back the hash of the received message
 Should act like a normal server
 Should not know it is being accessed through onion routing
 """
-import socket
+import socket, pickle
 import configparser
 from hashlib import sha224
 
@@ -37,9 +37,10 @@ try:
     print("Connection from {}".format(addr[0]))
     while True:
         data = conn.recv(BUFFER_SIZE)
-        print(type(data))
-        print(data)
-        print("Received from Client : " + data.decode(encoding = 'utf-8'))
+        data1 = pickle.loads(data)
+        print(type(data1.payload))
+        print(data1.payload)
+        print("Received from Client : " + data1.payload.decode())
 
         # Send SHA 224 of received message
         #response: bytes = bytes(sha224(data).hexdigest() + '\n', "utf-8")

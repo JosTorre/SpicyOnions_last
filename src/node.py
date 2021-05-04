@@ -137,6 +137,7 @@ rs.listen(2)
 
 backend = default_backend()
 circuits = []
+streams = []
 #Circuit Creation
 # ----------------------------------------------------------------
 
@@ -151,7 +152,7 @@ def threaded_client(back):
 # ----------------------------------------------------------------
 def calculate_keys(cell):
     #Check keys
-    if cell.hlen == 32 :
+    #if cell.hlen == 32 :
         peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
         shared_onion_key = private_onion_key.exchange(peer_public)
         global derived_key
@@ -202,32 +203,36 @@ def process(cell):
         respond(cell)
     elif cell.command == b'3': #RELAY // Two options
         cell.decrypt(derived_key)
+        streams.append(cell.streamID)
+        print('Running Streams: {}'.format(streams))
         if extends == 0: #If its the Exit Node...
             print(cell.data)
             connect_front(cell.data)
             #if cell.recognized == 0 : #Check if Cell is still encrypted
             print("Forwarding to Destination Server")
-
-            forward(cell.payload)
+            print(cell.payload)
+            forward(cell)
             cell = operate_endnode()
             #else: 
                 #print("Cell not recognized")
                 #print(cell.show_payload())
         else:
-            cell.update_stream(circuits[1])
             print('forwarding relay')
             forward(cell)
             cell = operate_node()
 
     elif cell.command == b'4': #DESTROY
         #print(cell.type)
+        if extends != 0:
+            cell.set_circuit_id(circuits[1])
+            forward(cell)
+            front.close()
         circuits.clear()
-        print('Circuit IDs: {}'.format(circuits))
+        streams.clear()
+        print('Circuit IDs: {} & Stream IDs: {}'.format(circuits, streams))
         proceed = False
-        forward(cell)
-        respond(cell)
         back.close()
-        front.close()
+        print('Circuit Closed!')
     else:
         print(cell.command)
         print("Non Recognized - Dropping Cell.")
@@ -252,10 +257,10 @@ def operate_endnode():
         client_response = back.recv(1024)
         relay = load(client_response)
         print(relay)
-        if relay.command == 4:
+        if relay.command == b'4':
             operate = False
         else:
-            relay.update_stream(circuits[1])
+            relay.update_stream(streams[0])
             relay.decrypt(derived_key)
             if relay.recognized() :
                 print(relay)
@@ -279,12 +284,12 @@ def operate_node():
         respond(relay)
         print("Waiting for Response")
         relay = load_back()
-        if relay.command == 4:
+        if relay.command == b'4':
             operate = False
         else:
             print(relay)
             print("Processing Response")
-            relay.update_stream(circuits[1])
+            relay.update_stream(streams[0])
             relay.decrypt(derived_key)
             if relay.recognized() :
                 print(relay)
