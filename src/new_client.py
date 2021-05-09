@@ -172,7 +172,7 @@ def CreateCircuit(ips, public_bytes):
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
             #print("Shared Key")
             #print(shared_onion_keys_arr[x])
-            if response.command == b'11':
+            if response.command == b'\x00\x0b': #11
                 print(response)
             else:
                 print("NOT CREATED!")
@@ -185,7 +185,7 @@ def CreateCircuit(ips, public_bytes):
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
             #print("Shared Key")
             #print(shared_onion_keys_arr[x])
-            if response.command == b'14':
+            if response.command == b'\x00\x0e': # 14
                 print(response)
             else:
                 print("NOT EXTENDED!")
@@ -198,8 +198,9 @@ def Communicate(ip, keys):
     while open_channel:
         message = input('Say Something: ')
         if message == "DESTROY":
-            reason = input('Give a reason: ')
-            destroy = DestroyCell(reason)
+            print("Sending Destroy Cell")
+            reason = 0
+            destroy = DestroyCell(reason.to_bytes(2, 'big'))
             destroy.set_circuit_id(circuits[0])
             print(destroy)
             destroy.print_type()

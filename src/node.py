@@ -170,7 +170,7 @@ def process(cell):
     proceed = True
     global extends
     print(cell)
-    if cell.command == b'10': #CREATE2
+    if cell.command == b'\x00\n': #CREATE2
         #print(cell.type)
         calculate_keys(cell)
         circuits.append(cell.circID)
@@ -178,7 +178,7 @@ def process(cell):
         cell.to_created(public_bytes)
         #print(cell.type)
         respond(cell)
-    elif cell.command == b'13': #EXTEND2 - 2 Scenarios
+    elif cell.command == b'\x00\r': #EXTEND2 - 2 Scenarios
         extends += 1
         if extends == 1: #Needs to extend
             #print(cell.type)
@@ -193,15 +193,15 @@ def process(cell):
             forward(cell)
         cell = load_front()
         proceed = process(cell)
-    elif cell.command == b'11': #CREATED2
+    elif cell.command == b'\x00\x0b': #CREATED2
         #print(cell.type)
         cell.to_extended()
         #print(cell.type)
         respond(cell)
-    elif cell.command == b'14': #EXTENDED2
+    elif cell.command == b'\x00\x0e': #EXTENDED2
         #print(cell.type)
         respond(cell)
-    elif cell.command == b'3': #RELAY // Two options
+    elif cell.command == b'\x00\x03': #RELAY // Two options
         cell.decrypt(derived_key)
         streams.append(cell.streamID)
         print('Running Streams: {}'.format(streams))
@@ -221,7 +221,7 @@ def process(cell):
             forward(cell)
             cell = operate_node()
 
-    elif cell.command == b'4': #DESTROY
+    elif cell.command == b'\x00\x04': #DESTROY
         #print(cell.type)
         if extends != 0:
             cell.set_circuit_id(circuits[1])
@@ -246,7 +246,8 @@ def operate_endnode():
         print("Waiting for Response")
         response = front.recv(1024)
         print("Processing Response")
-        relay = RelayCell(0, response)
+        resp = pickle.loads(response)
+        relay = RelayCell(0, resp.payload.decode())
         print(relay)
         relay.encrypt(derived_key)
         relay.update_stream(circuit[0])
@@ -257,14 +258,14 @@ def operate_endnode():
         client_response = back.recv(1024)
         relay = load(client_response)
         print(relay)
-        if relay.command == b'4':
+        if relay.command == b'\x00\x04': # if Destroy
             operate = False
         else:
             relay.update_stream(streams[0])
             relay.decrypt(derived_key)
             if relay.recognized() :
                 print(relay)
-                forward(relay)
+                forward(relay.payload)
             else:
                 print("Relay not recognized")
                 print(relay.show_payload())
@@ -284,7 +285,7 @@ def operate_node():
         respond(relay)
         print("Waiting for Response")
         relay = load_back()
-        if relay.command == b'4':
+        if relay.command == b'\x00\x04': #Destroy
             operate = False
         else:
             print(relay)
