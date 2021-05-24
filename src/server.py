@@ -37,10 +37,12 @@ try:
     print("Connection from {}".format(addr[0]))
     while True:
         data = conn.recv(BUFFER_SIZE)
-        data1 = pickle.loads(data)
-        print(type(data1.payload))
-        print(data1.payload)
-        print("Received from Client : " + data1.payload.decode())
+        cell = pickle.loads(data)
+        msg = cell.payload.decode()
+        stripped_msg = msg.rstrip('=')
+        print("Received from Client : " + stripped_msg)
+        cell.payload = stripped_msg.encode()
+        data = pickle.dumps(stripped_msg.encode())
 
         # Send SHA 224 of received message
         #response: bytes = bytes(sha224(data).hexdigest() + '\n', "utf-8")

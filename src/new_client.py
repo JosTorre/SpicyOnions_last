@@ -105,12 +105,12 @@ node_addr = [dest_ip]
 
  
 
-while i < NUM_NODES:
+while i < 3:
     pubkeys.append(in_keys[y[i]])
     node_addr.append(in_addr[y[i]])
     i+=1
 #print(node_addr)
-
+print(node_addr)
  
 
 # Create Key
@@ -165,12 +165,12 @@ def CreateCircuit(ips, public_bytes):
         if x == 0:
             create = CreateCell(public_bytes)
             print(create) #prints cells contents
-            #create.print_type() # prints cell attribut types
+            create.print_type() # prints cell attribut types
             circuits.append(create.circID)
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
-            #print("Shared Key")
+            print("Shared Key")
             #print(shared_onion_keys_arr[x])
             if response.command == b'\x00\x0b': #11
                 print(response)
@@ -179,7 +179,7 @@ def CreateCircuit(ips, public_bytes):
         else:
             extend = ExtendCell(ips[x], public_bytes)
             print(extend) #prints cells contents
-            #extend.print_type() #print cell attribute types
+            extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
@@ -211,8 +211,8 @@ def Communicate(ip, keys):
             print('CIRCUIT DESTROYED!')
         else:
             relay = RelayCell(ip[0], message)
-            #relay.print_type() # print cell Attribute types
-            relay.update_stream(streams[0])
+            relay.print_type() # print cell Attribute types
+            #relay.update_stream(streams[0])
             print(type(relay.payload))
             print(relay)
             relay.full_encrypt(shared_onion_keys_arr)
@@ -221,6 +221,7 @@ def Communicate(ip, keys):
             forward(relay)
             cell = load(front.recv(1024))
             print(cell)
+            print(type(cell.payload))
             cell.full_decrypt(shared_onion_keys_arr)
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))

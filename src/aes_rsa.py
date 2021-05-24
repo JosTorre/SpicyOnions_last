@@ -69,7 +69,7 @@ def aes_encrypt(key: bytes, msg: str) -> str:
     assert isinstance(key,bytes), "The variable key must be bytes"
 
     padded_msg: str = pad(msg)
-    keydigest = hashes.Hash(hashes.SHA256())
+    keydigest = hashes.Hash(hashes.SHA256(),backend=backend)
     keydigest.update(key)
     cipher = AES.new(keydigest.finalize())
     encrypted: str = cipher.encrypt(padded_msg)
@@ -88,7 +88,7 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     :rtype: bytes
     """
 
-    assert isinstance(msg,bytes), "The variable msg must be bytes"
+    assert isinstance(msg,str), "The variable msg must be bytes"
     assert isinstance(key,bytes), "The variable key must be bytes"
     keydigest = hashes.Hash(hashes.SHA256(),backend=backend)
     print(msg)
