@@ -223,6 +223,7 @@ def Communicate(ip, keys):
             print(cell)
             print(type(cell.payload))
             cell.full_decrypt(shared_onion_keys_arr)
+            #cell.payload = b64decode(cell.payload)
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))
 

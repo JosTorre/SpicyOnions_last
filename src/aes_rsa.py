@@ -105,7 +105,7 @@ def aes_decrypt(key: bytes, msg: bytes) -> bytes:
     #decrypted = decrypted.decode()
     padding = PADDING.encode()
     #decrypted = decrypted.rstrip(padding)
-    return decrypted
+    return str(decrypted, 'utf-8')
 
 def rsa_encrypt(pub_key: bytes, msg: str) -> str:
     """Encrypts using RSA public key

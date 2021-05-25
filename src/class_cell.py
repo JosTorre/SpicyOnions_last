@@ -27,11 +27,11 @@ class CreateCell:
 
         def __str__(self):
             if self.command == b'\x00\n':
-                return 'CREATE2: [{}|{}|{}|{}|{}]'.format(self.command.decode('utf-8'), self.circID, self.htype.decode('utf-8'), self.hlen, self.hdata.hex())
+                return 'CREATE2: [{}|{}|{}|{}|{}]'.format(self.command, self.circID, self.htype.decode('utf-8'), self.hlen, self.hdata.hex())
             elif self.command == b'\x00\x0b':
-                return 'CREATED2: [{}|{}|{}]'.format(self.command.decode('utf-8'), self.hlen, self.hdata.hex())
+                return 'CREATED2: [{}|{}|{}]'.format(self.command, self.hlen, self.hdata.hex())
             elif self.command == b'\x00\x0e':
-                return 'EXTENDED2: [{}|{}|{}]'.format(self.command.decode('utf-8'), self.hlen, self.hdata.hex())
+                return 'EXTENDED2: [{}|{}|{}]'.format(self.command, self.hlen, self.hdata.hex())
         
         def print_type(self):
                 print('Typ: {}  Länge: {} '.format(type(self.command), sys.getsizeof(self.command)))
@@ -118,10 +118,10 @@ class RelayCell:
                     #print(bytes(str(self.payload)))
                     #self.recognized = aes_encrypt(keys[2-x], str(self.recognized))
         def full_decrypt(self, keys):
-                for x in range(len(keys)-1) :
+                for x in range(len(keys)) :
                     self.payload = aes_decrypt(keys[x], self.payload)
                     print(self.payload)
-                    self.recognized = aes_decrypt(keys[x], self.recognized)
+                    #self.recognized = aes_decrypt(keys[x], self.recognized)
 
         def recognized():
                 print(self.recognized)
