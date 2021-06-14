@@ -2,7 +2,7 @@
 # coding: utf-8
 
  
-
+import os
 import socket, pickle, sys, secrets
 import configparser
 from class_cell import RelayCell, ExtendCell, CreateCell, DestroyCell
@@ -24,15 +24,15 @@ from Crypto.Cipher import AES
 # ----------------------------------------------------------------
 #IP: str = socket.gethostbyname(socket.gethostname())
 IP: str = '172.18.0.1'
-CONFIG_FILE = "/home/spice/spiceonion/SweetOnions/src/sweet_onions.cfg"
-
+CONFIG_FILE = "/home/spice/spiceonion/SpicyOnionsGit/src/spicy_onions.cfg"
  
 
 # Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
+os.chdir('/home/spice/spiceonion/SpicyOnionsGit/src/')
 
- 
+print(config["DIRECTORY"]["Port"])
 
 DIR_PORT: int = int(config["DIRECTORY"]["Port"])
 PORT: int = int(config["DEFAULT"]["Port"])
@@ -40,8 +40,6 @@ BUFFER_SIZE: int = int(config["DEFAULT"]["BufferSize"])
 SEP: str = config["MESSAGES"]["Separator"]
 CLIENT_REQ: str = config["MESSAGES"]["ClientRequest"]
 NOT_READY_MSG: str = config["MESSAGES"]["NotReady"]
-
- 
 
 DIR_NODE: str = input("Directory server to connect to: ")
 
@@ -55,6 +53,8 @@ s.connect((DIR_NODE, DIR_PORT))
  
 
 # Send and receive message from directory
+# ----------------------------------------------------------------i
+
 s.send(bytes(CLIENT_REQ + SEP,"utf-8"))
 dir_data = s.recv(BUFFER_SIZE).decode()
 
@@ -161,6 +161,19 @@ backend = default_backend()
 
 
 def CreateCircuit(ips, public_bytes):
+    """
+    CreateCircuit(argument1,argument2)
+
+        Name: CreateCircuit 
+        
+        Send and recive create and extend cells for the circuit ceation.
+
+        Parameters:
+
+        argument1 (String Array): Array of string containing Node IP-Adresses
+        argument2 (String): Public Bytes for Key Exchange
+
+    """
     for x in range(0, len(ips)-1):
         if x == 0:
             create = CreateCell(public_bytes)
@@ -193,6 +206,16 @@ def CreateCircuit(ips, public_bytes):
     print("CIRCUIT CREATED")
 
 def Communicate(ip, keys):
+    """
+    Communicate(argument1,argument2)
+        Name: Communicate
+
+        Send and recive messages over the circuit
+
+        Parameter:
+        argument1 (String Array): Array of strings containing Node IP-Adresses
+        argument2 (String Array): Array of strings containing keys for encrytion
+    """
     open_channel = True
     streams.append(secrets.token_hex(2))
     while open_channel:
@@ -230,14 +253,43 @@ def Communicate(ip, keys):
     print("Communication finished!")
 
 def forward(cell):
+    """
+    forward(agument1)
+        Name: Forward
+
+        Take object in argument1, converts it with pickle and sends it to the next Node.
+
+        Parameter:
+        argument1(object): Object to send to the next node.
+    """
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
     
 def load(data):
+    """
+    load(argument1)
+        Name: Load
+
+        Loads object in argument1 with pickle an returns the object
+
+        argument1(bytes): converts bytes via pickle to object
+
+        return: converted object
+    """
     cell = pickle.loads(data)
     return cell
     
 def HKDFKey(secret):
+    """
+    HKDFKey(argument1)
+        Name: HKDFKey
+
+        Key derivation function. Takes secret in argument1 and derives key.
+
+        argument1: Value for key derivation
+
+        return: Key
+    """
     peer_public = x25519.X25519PublicKey.from_public_bytes(secret)
     shared_onion_key = private_onion_key.exchange(peer_public)
     derived_key = HKDF(

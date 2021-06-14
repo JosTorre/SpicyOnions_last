@@ -142,6 +142,14 @@ streams = []
 # ----------------------------------------------------------------
 
 def threaded_client(back):
+    """
+    threaded_client(argument1)
+        Name: Threaded_Client
+
+        ???
+
+        argmuent1(???):???
+    """
     proceed = True
     while proceed:
         data = back.recv(2048) # We get data from predecesor
@@ -151,6 +159,14 @@ def threaded_client(back):
 #Functions
 # ----------------------------------------------------------------
 def calculate_keys(cell):
+    """
+        calculate_keys(argument1)
+            Name: Calculate_Keys
+
+            Key derivation function. Takes object in argument1 and derives key.
+
+            argument1(object): Takes object from circuit creation and uses the value in object.hdata for key derivation
+    """
     #Check keys
     #if cell.hlen == 32 :
         peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
@@ -167,6 +183,17 @@ def calculate_keys(cell):
         print(derived_key)
 
 def process(cell):
+    
+    """
+    process(argument1)
+        Name: Process
+
+        Takes cells from communication and process them depending on the celltyp
+
+        argument1(object): Cell object ???
+
+    """
+
     proceed = True
     global extends
     print(cell)
@@ -241,6 +268,15 @@ def process(cell):
 
 
 def operate_endnode():
+    """
+    operate_endnode()
+        Name: Operate_Endnode
+
+        Function contains actions for messages on the Endnode in the Circuit
+
+        return: Relay Cell
+
+    """
     operate = True
     while operate:
         print("Waiting for Response")
@@ -272,6 +308,15 @@ def operate_endnode():
     return relay
 
 def operate_node():
+        """
+        operate_node()
+            Name: Operate_Node
+
+            Function contains actions for messages on the nodes in the Circuit
+
+            return: Relay Cell
+
+        """
     operate = True
     while operate:
         print("Waiting for Response")
@@ -302,6 +347,14 @@ def operate_node():
 
 
 def connect_front(ip):
+    """
+    connect_front(argument1)
+        Name: Connect_Front
+
+        Uses the IP-adreese from argument1 to connect to the next node
+
+        argument1: IP-adresse of the next node or destination
+    """
     global front
     front = socket.socket() #Initialize Socket for next Node
     try:
@@ -310,21 +363,53 @@ def connect_front(ip):
       print(str(e))
 
 def load_back():
+    """
+    load_back()
+        Name: Load_Back
+
+        Takes Data and converts it with pickle.
+
+        return: object variable
+    """
     data = back.recv(1024)
     cell = pickle.loads(data)
     return cell
 
 def load_front():
+        """
+        load_front()
+            Name: Load_Front
+
+            Takes Data and converts it with pickle.
+
+            return: object variable
+        """
     data = front.recv(1024)
     cell = pickle.loads(data)
     print(data)
     return cell
 
 def respond(cell):
+        """
+        respond(argument1)
+            Name: Respond
+
+            Converts Object with pickle and sends it
+
+            argument1(object): cell object to send
+        """
     pickled_cell = pickle.dumps(cell)
     back.send(pickled_cell)
 
 def forward(cell):
+        """
+        Forward(argument1)
+            Name: Forward
+
+            Converts Object with pickle and sends it
+
+            argument1(object): cell object to send    
+        """
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
 #Run Node
