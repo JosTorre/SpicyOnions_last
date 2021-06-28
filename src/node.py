@@ -20,7 +20,7 @@ from cryptography.hazmat.backends import default_backend
 # Init
 # ----------------------------------------------------------------
 
-CONFIG_FILE: str = "sweet_onions.cfg"
+CONFIG_FILE: str = "spicy_onions.cfg"
 IP: str = socket.gethostbyname(socket.gethostname())
 
 # Read configuration
@@ -169,18 +169,18 @@ def calculate_keys(cell):
     """
     #Check keys
     #if cell.hlen == 32 :
-        peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
-        shared_onion_key = private_onion_key.exchange(peer_public)
-        global derived_key
-        derived_key = HKDF(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=None,
-            info=b'handshake data',
-            backend=backend
-            ).derive(shared_onion_key)
-        print('Shared Secret:')
-        print(derived_key)
+    peer_public = x25519.X25519PublicKey.from_public_bytes(cell.hdata)
+    shared_onion_key = private_onion_key.exchange(peer_public)
+    global derived_key
+    derived_key = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=None,
+        info=b'handshake data',
+        backend=backend
+        ).derive(shared_onion_key)
+    print('Shared Key:')
+    print(derived_key)
 
 def process(cell):
     
@@ -235,21 +235,20 @@ def process(cell):
         if extends == 0: #If its the Exit Node...
             print(cell.data)
             connect_front(cell.data)
-            #if cell.recognized == 0 : #Check if Cell is still encrypted
-            print("Forwarding to Destination Server")
-            print(cell.payload)
-            forward(cell)
-            cell = operate_endnode()
-            #else: 
-                #print("Cell not recognized")
-                #print(cell.show_payload())
+            if cell.recognized == b'0' : #Check if Cell is still encrypted
+                print("Forwarding to Destination Server")
+            #print(cell.payload)
+                forward(cell)
+                cell = operate_endnode()
+            else: 
+                print("Cell not recognized")
+               # print(cell.show_payload())
         else:
             print('forwarding relay')
             forward(cell)
             cell = operate_node()
 
     elif cell.command == b'\x00\x04': #DESTROY
-        #print(cell.type)
         if extends != 0:
             cell.set_circuit_id(circuits[1])
             forward(cell)
@@ -279,27 +278,25 @@ def operate_endnode():
     """
     operate = True
     while operate:
-        print("Waiting for Response")
+        print("Waiting for Server")
         response = front.recv(1024)
         print("Processing Response")
         resp = pickle.loads(response)
         relay = RelayCell(0, resp.decode())
-        print(relay)
         relay.encrypt(derived_key)
         #relay.update_stream(circuit[0])
         print("Sending Relay")
-        print(relay)
         respond(relay)
-
+        print('Waiting for Client')
         client_response = back.recv(1024)
         relay = load(client_response)
-        print(relay)
         if relay.command == b'\x00\x04': # if Destroy
             operate = False
         else:
             relay.update_stream(streams[0])
             relay.decrypt(derived_key)
-            if relay.recognized() :
+            print(relay.recognized)
+            if relay.is_recognized() == True :
                 print(relay)
                 forward(relay.payload)
             else:
@@ -308,7 +305,7 @@ def operate_endnode():
     return relay
 
 def operate_node():
-        """
+    """
         operate_node()
             Name: Operate_Node
 
@@ -316,19 +313,17 @@ def operate_node():
 
             return: Relay Cell
 
-        """
+    """
     operate = True
     while operate:
-        print("Waiting for Response")
+        print("Waiting for Server")
         relay = load_front()
-        print(relay)
         print("Processing Response")
         relay.encrypt(derived_key)
         #relay.update_stream(stream[0])
         print("Sending Relay")
-        print(relay)
         respond(relay)
-        print("Waiting for Response")
+        print("Waiting for Client")
         relay = load_back()
         if relay.command == b'\x00\x04': #Destroy
             operate = False
@@ -337,12 +332,7 @@ def operate_node():
             print("Processing Response")
             relay.update_stream(streams[0])
             relay.decrypt(derived_key)
-            if relay.recognized() :
-                print(relay)
-                forward(relay)
-            else:
-                print("Relay not recognized")
-                print(relay.show_payload())
+            forward(relay)
     return relay
 
 
@@ -376,40 +366,40 @@ def load_back():
     return cell
 
 def load_front():
-        """
-        load_front()
-            Name: Load_Front
+    """
+    load_front()
+        Name: Load_Front
 
-            Takes Data and converts it with pickle.
+        Takes Data and converts it with pickle.
 
-            return: object variable
-        """
+        return: object variable
+    """
     data = front.recv(1024)
     cell = pickle.loads(data)
     print(data)
     return cell
 
 def respond(cell):
-        """
-        respond(argument1)
-            Name: Respond
+    """
+    respond(argument1)
+        Name: Respond
 
-            Converts Object with pickle and sends it
+        Converts Object with pickle and sends it
 
-            argument1(object): cell object to send
-        """
+        argument1(object): cell object to send
+    """
     pickled_cell = pickle.dumps(cell)
     back.send(pickled_cell)
 
 def forward(cell):
-        """
-        Forward(argument1)
-            Name: Forward
+    """
+    Forward(argument1)
+        Name: Forward
 
-            Converts Object with pickle and sends it
+        Converts Object with pickle and sends it
 
-            argument1(object): cell object to send    
-        """
+        argument1(object): cell object to send    
+    """
     pickled_cell = pickle.dumps(cell)
     front.send(pickled_cell)
 #Run Node

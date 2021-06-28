@@ -38,11 +38,11 @@ try:
     while True:
         data = conn.recv(BUFFER_SIZE)
         cell = pickle.loads(data)
-        msg = cell.payload.decode()
+        msg = cell.payload
         stripped_msg = msg.rstrip('=')
         print("Received from Client : " + stripped_msg)
-        cell.payload = stripped_msg.encode()
-        data = pickle.dumps(stripped_msg.encode())
+        cell.payload = stripped_msg
+        data = pickle.dumps(stripped_msg)
 
         # Send SHA 224 of received message
         #response: bytes = bytes(sha224(data).hexdigest() + '\n', "utf-8")

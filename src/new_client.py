@@ -24,15 +24,12 @@ from Crypto.Cipher import AES
 # ----------------------------------------------------------------
 #IP: str = socket.gethostbyname(socket.gethostname())
 IP: str = '172.18.0.1'
-CONFIG_FILE = "/home/spice/spiceonion/SpicyOnionsGit/src/spicy_onions.cfg"
- 
+CONFIG_FILE = "spicy_onions.cfg" 
 
 # Read configuration
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE)
-os.chdir('/home/spice/spiceonion/SpicyOnionsGit/src/')
-
-print(config["DIRECTORY"]["Port"])
+#os.chdir('/home/spice/spiceonion/SpicyOnionsGit/src/')
 
 DIR_PORT: int = int(config["DIRECTORY"]["Port"])
 PORT: int = int(config["DEFAULT"]["Port"])
@@ -110,7 +107,7 @@ while i < 3:
     node_addr.append(in_addr[y[i]])
     i+=1
 #print(node_addr)
-print(node_addr)
+#print(node_addr)
  
 
 # Create Key
@@ -178,13 +175,11 @@ def CreateCircuit(ips, public_bytes):
         if x == 0:
             create = CreateCell(public_bytes)
             print(create) #prints cells contents
-            create.print_type() # prints cell attribut types
+            #create.print_type() # prints cell attribut types
             circuits.append(create.circID)
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
-            print("Shared Key")
-            #print(shared_onion_keys_arr[x])
             if response.command == b'\x00\x0b': #11
                 print(response)
             else:
@@ -192,17 +187,16 @@ def CreateCircuit(ips, public_bytes):
         else:
             extend = ExtendCell(ips[x], public_bytes)
             print(extend) #prints cells contents
-            extend.print_type() #print cell attribute types
+            #extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
-            #print("Shared Key")
-            #print(shared_onion_keys_arr[x])
             if response.command == b'\x00\x0e': # 14
                 print(response)
             else:
                 print("NOT EXTENDED!")
-        print(shared_onion_keys_arr)
+    print("Shared Keys")
+    print(shared_onion_keys_arr)
     print("CIRCUIT CREATED")
 
 def Communicate(ip, keys):
@@ -226,7 +220,7 @@ def Communicate(ip, keys):
             destroy = DestroyCell(reason.to_bytes(2, 'big'))
             destroy.set_circuit_id(circuits[0])
             print(destroy)
-            destroy.print_type()
+            #destroy.print_type()
             forward(destroy)
             streams.clear()
             front.close()
@@ -234,19 +228,15 @@ def Communicate(ip, keys):
             print('CIRCUIT DESTROYED!')
         else:
             relay = RelayCell(ip[0], message)
-            relay.print_type() # print cell Attribute types
-            #relay.update_stream(streams[0])
-            print(type(relay.payload))
-            print(relay)
+            #relay.print_type() # print cell Attribute types
             relay.full_encrypt(shared_onion_keys_arr)
-            relay.payload = relay.payload.encode()
             print(relay) #prints cell contentsi
             forward(relay)
             cell = load(front.recv(1024))
-            print(cell)
-            print(type(cell.payload))
             cell.full_decrypt(shared_onion_keys_arr)
             #cell.payload = b64decode(cell.payload)
+            msg = cell.payload
+            stripped_msg = msg.rstrip('=') 
             print(cell.payload)
             #print("Received from Server: {}".format(response.message))
 
