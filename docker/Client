@@ -1,3 +1,0 @@
-FROM spicy_onions/generic:latest
-
-ENTRYPOINT ./new_client.py -g
