@@ -1,3 +1,0 @@
-FROM sweet_onions/generic:latest
-
-ENTRYPOINT ./new_node.py -g

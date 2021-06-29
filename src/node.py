@@ -198,35 +198,27 @@ def process(cell):
     global extends
     print(cell)
     if cell.command == b'\x00\n': #CREATE2
-        #print(cell.type)
         calculate_keys(cell)
         circuits.append(cell.circID)
         print("Circuit IDs: {}".format(circuits))
         cell.to_created(public_bytes)
-        #print(cell.type)
         respond(cell)
-    elif cell.command == b'\x00\r': #EXTEND2 - 2 Scenarios
+    elif cell.command == b'\x00\x0e': #EXTEND2 - 2 Scenarios
         extends += 1
         if extends == 1: #Needs to extend
-            #print(cell.type)
             connect_front(cell.lspec)
             cell = CreateCell(cell.hdata)
-            #print(cell.type)
             circuits.append(cell.circID)
             print("Circuit IDs: {}".format(circuits))
             forward(cell)
         else: #Just forward extend
-            #print(cell.type)
             forward(cell)
         cell = load_front()
         proceed = process(cell)
     elif cell.command == b'\x00\x0b': #CREATED2
-        #print(cell.type)
         cell.to_extended()
-        #print(cell.type)
         respond(cell)
-    elif cell.command == b'\x00\x0e': #EXTENDED2
-        #print(cell.type)
+    elif cell.command == b'\x00\x0f': #EXTENDED2
         respond(cell)
     elif cell.command == b'\x00\x03': #RELAY // Two options
         cell.decrypt(derived_key)
@@ -237,12 +229,11 @@ def process(cell):
             connect_front(cell.data)
             if cell.recognized == b'0' : #Check if Cell is still encrypted
                 print("Forwarding to Destination Server")
-            #print(cell.payload)
-                forward(cell)
+                forward(cell.payload)
                 cell = operate_endnode()
             else: 
                 print("Cell not recognized")
-               # print(cell.show_payload())
+                print(cell.show_payload())
         else:
             print('forwarding relay')
             forward(cell)
@@ -282,21 +273,20 @@ def operate_endnode():
         response = front.recv(1024)
         print("Processing Response")
         resp = pickle.loads(response)
-        relay = RelayCell(0, resp.decode())
+        relay = RelayCell(0, resp)
         relay.encrypt(derived_key)
         #relay.update_stream(circuit[0])
         print("Sending Relay")
         respond(relay)
         print('Waiting for Client')
-        client_response = back.recv(1024)
-        relay = load(client_response)
+        relay = load_back()
         if relay.command == b'\x00\x04': # if Destroy
             operate = False
         else:
             relay.update_stream(streams[0])
             relay.decrypt(derived_key)
             print(relay.recognized)
-            if relay.is_recognized() == True :
+            if relay.is_recognized():
                 print(relay)
                 forward(relay.payload)
             else:

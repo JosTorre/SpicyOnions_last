@@ -180,18 +180,17 @@ def CreateCircuit(ips, public_bytes):
             forward(create)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
-            if response.command == b'\x00\x0b': #11
+            if response.command == b'\x00\x0b': #CREATED2
                 print(response)
             else:
                 print("NOT CREATED!")
         else:
             extend = ExtendCell(ips[x], public_bytes)
             print(extend) #prints cells contents
-            #extend.print_type() #print cell attribute types
             forward(extend)
             response = load(front.recv(1024))
             shared_onion_keys_arr.append(HKDFKey(response.hdata))
-            if response.command == b'\x00\x0e': # 14
+            if response.command == b'\x00\x0f': # EXTENDED
                 print(response)
             else:
                 print("NOT EXTENDED!")
